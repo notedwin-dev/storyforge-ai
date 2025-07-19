@@ -39,8 +39,44 @@ class GeminiStoryGenerator {
         
         // Parse the story into scenes
         console.log(`🎭 Parsing story into scenes...`);
-        const parsedStory = this.parseStoryIntoScenes(storyText, characterDNA);
-        console.log(`🎭 Parsing completed. Scenes found: ${parsedStory.scenes?.length || 0}`);
+
+        // Add timeout protection for parsing using setTimeout
+        let parsedStory;
+        let parsingComplete = false;
+
+        setTimeout(() => {
+          if (!parsingComplete) {
+            console.error(`❌ Story parsing timeout after 10 seconds - forcing completion`);
+            throw new Error('Story parsing timeout after 10 seconds');
+          }
+        }, 10000);
+
+        try {
+          parsedStory = this.parseStoryIntoScenes(storyText, characterDNA);
+          parsingComplete = true;
+          console.log(`🎭 Parsing completed. Scenes found: ${parsedStory.scenes?.length || 0}`);
+        } catch (parseError) {
+          parsingComplete = true;
+          console.error(`❌ Parsing error:`, parseError);
+
+          // Create emergency fallback
+          parsedStory = {
+            title: `${characterDNA.name}'s Adventure`,
+            scenes: [{
+              id: 'scene_1',
+              number: 1,
+              title: 'The Adventure Begins',
+              content: storyText.substring(0, Math.min(500, storyText.length)) + '...',
+              description: storyText.substring(0, Math.min(500, storyText.length)) + '...',
+              characterName: characterDNA.name,
+              storyboardPrompt: `${characterDNA.name} begins an adventure, ${storyText.substring(0, 100)}`
+            }],
+            totalScenes: 1,
+            character: characterDNA,
+            emergencyFallback: true
+          };
+          console.log(`⚠️ Using emergency fallback story structure`);
+        }
         
         console.log(`✅ Gemini story generation successful on attempt ${attempt}`);
         
@@ -215,26 +251,67 @@ NOW CREATE YOUR STORY WITH EXACTLY 4 SCENES FOLLOWING THIS EXACT FORMAT:`;
   }
 
   parseStoryIntoScenes(storyText, characterDNA) {
+    console.log(`🔍 Starting scene parsing for text length: ${storyText.length}`);
+
+    // Early validation
+    if (!storyText || storyText.length < 50) {
+      console.warn(`⚠️ Story text too short (${storyText.length} chars), using fallback`);
+      return this.createEmergencyFallback(characterDNA, storyText);
+    }
+
+    console.log(`🔍 First 500 chars: ${storyText.substring(0, 500)}`);
+
     const scenes = [];
     
-    // Updated regex to match the new format with multiple sentences per scene
-    const sceneRegex = /SCENE\s+(\d+):\s*([^\n]+)\n((?:[^\n]+\n?)*?)(?=SCENE\s+\d+:|$)/gi;
-    
-    let match;
-    while ((match = sceneRegex.exec(storyText)) !== null) {
-      const [, sceneNumber, sceneTitle, sceneContent] = match;
-      const cleanContent = sceneContent.trim();
+    try {
+      // Primary parsing method: Simplified regex to avoid infinite loops
+      console.log(`🔍 Starting primary regex execution...`);
+
+      // Split by SCENE markers first, then process each part
+      const sceneParts = storyText.split(/SCENE\s+\d+:/gi);
+      console.log(`🔍 Split into ${sceneParts.length} parts by scene markers`);
       
-      console.log(`✅ Parsed Scene ${sceneNumber}: "${sceneTitle}" - Content length: ${cleanContent.length} chars`);
-      
-      scenes.push({
-        id: `scene_${sceneNumber}`,
-        number: parseInt(sceneNumber),
-        title: sceneTitle.trim(),
-        content: cleanContent, // This is the readable story content
-        characterName: characterDNA.name,
-        storyboardPrompt: this.generateStoryboardPrompt(sceneTitle, cleanContent, characterDNA) // This is for image generation
-      });
+      // Skip the first part if it's empty (before first scene)
+      const startIndex = sceneParts[0].trim().length === 0 ? 1 : 0;
+
+      for (let i = startIndex; i < sceneParts.length && scenes.length < 4; i++) {
+        const part = sceneParts[i].trim();
+        if (part.length === 0) continue;
+
+        // Extract title and content
+        const lines = part.split('\n');
+        const title = lines[0].trim();
+        const content = lines.slice(1).join('\n').trim();
+
+        if (title.length > 0 && content.length > 0) {
+          const sceneNumber = scenes.length + 1;
+
+          console.log(`✅ Parsed Scene ${sceneNumber}: "${title}" - Content length: ${content.length} chars`);
+
+          scenes.push({
+            id: `scene_${sceneNumber}`,
+            number: sceneNumber,
+            title: title,
+            content: content,
+            description: content,
+            characterName: characterDNA.name,
+            storyboardPrompt: this.generateStoryboardPrompt(title, content, characterDNA)
+          });
+        }
+      }
+
+      console.log(`🔍 Simple split method complete. Found ${scenes.length} scenes`);
+
+      // Fallback parsing if primary method failed
+      if (scenes.length === 0) {
+        console.log(`⚠️ Primary parsing failed, trying fallback method...`);
+        return this.fallbackParseStory(storyText, characterDNA);
+      }
+
+    } catch (error) {
+      console.error(`❌ Error in primary parsing:`, error);
+      console.log(`⚠️ Trying fallback parsing method...`);
+      return this.fallbackParseStory(storyText, characterDNA);
     }
 
     console.log(`🎭 Story structure: ${scenes.length} scenes parsed with separate content and storyboard prompts`);
@@ -268,6 +345,128 @@ NOW CREATE YOUR STORY WITH EXACTLY 4 SCENES FOLLOWING THIS EXACT FORMAT:`;
       scenes,
       totalScenes: 4, // Always 4 now
       character: characterDNA
+    };
+  }
+
+  fallbackParseStory(storyText, characterDNA) {
+    console.log(`🔧 Using fallback parsing method...`);
+
+    const scenes = [];
+
+    // Try simpler scene splitting
+    const lines = storyText.split('\n').filter(line => line.trim().length > 0);
+
+    let currentScene = null;
+    let sceneCount = 0;
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+
+      // Check for scene headers (more flexible)
+      if (trimmedLine.match(/^SCENE\s+\d+/i) || trimmedLine.match(/^Scene\s+\d+/i)) {
+        // Save previous scene if exists
+        if (currentScene && currentScene.content.trim().length > 0) {
+          scenes.push(currentScene);
+        }
+
+        sceneCount++;
+        const title = trimmedLine.replace(/^SCENE\s+\d+:\s*/i, '').replace(/^Scene\s+\d+:\s*/i, '') || `Scene ${sceneCount}`;
+
+        currentScene = {
+          id: `scene_${sceneCount}`,
+          number: sceneCount,
+          title: title,
+          content: '',
+          description: '',
+          characterName: characterDNA.name,
+          storyboardPrompt: ''
+        };
+
+        console.log(`🔧 Fallback found scene ${sceneCount}: "${title}"`);
+      } else if (currentScene && trimmedLine.length > 0) {
+        // Add content to current scene
+        currentScene.content += (currentScene.content ? ' ' : '') + trimmedLine;
+      }
+    }
+
+    // Add the last scene
+    if (currentScene && currentScene.content.trim().length > 0) {
+      scenes.push(currentScene);
+    }
+
+    // If still no scenes, create basic fallback scenes
+    if (scenes.length === 0) {
+      console.log(`⚠️ No scenes found, creating basic fallback scenes from full text...`);
+
+      // Split text into roughly equal parts
+      const textChunks = this.splitTextIntoChunks(storyText, 4);
+
+      for (let i = 0; i < textChunks.length; i++) {
+        scenes.push({
+          id: `scene_${i + 1}`,
+          number: i + 1,
+          title: `Scene ${i + 1}`,
+          content: textChunks[i],
+          description: textChunks[i],
+          characterName: characterDNA.name,
+          storyboardPrompt: this.generateStoryboardPrompt(`Scene ${i + 1}`, textChunks[i], characterDNA)
+        });
+      }
+    }
+
+    // Update storyboard prompts and descriptions for parsed scenes
+    scenes.forEach(scene => {
+      scene.description = scene.content;
+      scene.storyboardPrompt = this.generateStoryboardPrompt(scene.title, scene.content, characterDNA);
+    });
+
+    console.log(`✅ Fallback parsing completed. Found ${scenes.length} scenes`);
+
+    return {
+      title: `${characterDNA.name}'s Adventure`,
+      scenes: scenes.slice(0, 4), // Ensure max 4 scenes
+      totalScenes: Math.min(scenes.length, 4),
+      character: characterDNA,
+      fallbackParsed: true
+    };
+  }
+
+  splitTextIntoChunks(text, numChunks) {
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const chunkSize = Math.ceil(sentences.length / numChunks);
+    const chunks = [];
+
+    for (let i = 0; i < numChunks; i++) {
+      const start = i * chunkSize;
+      const end = Math.min(start + chunkSize, sentences.length);
+      const chunk = sentences.slice(start, end).join('. ').trim();
+      if (chunk.length > 0) {
+        chunks.push(chunk + '.');
+      }
+    }
+
+    return chunks;
+  }
+
+  createEmergencyFallback(characterDNA, storyText = '') {
+    console.log(`🚨 Creating emergency fallback story for ${characterDNA.name}`);
+
+    const fallbackContent = storyText || `${characterDNA.name} embarks on an exciting adventure filled with challenges and discoveries.`;
+
+    return {
+      title: `${characterDNA.name}'s Adventure`,
+      scenes: [{
+        id: 'scene_1',
+        number: 1,
+        title: 'The Adventure Begins',
+        content: fallbackContent,
+        description: fallbackContent,
+        characterName: characterDNA.name,
+        storyboardPrompt: `${characterDNA.name} begins an exciting adventure`
+      }],
+      totalScenes: 1,
+      character: characterDNA,
+      emergencyFallback: true
     };
   }
 

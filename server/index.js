@@ -20,12 +20,43 @@ const { cleanupTempFiles } = require('./services/cleanup');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Security middleware
-app.use(helmet());
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
-  credentials: true
+// Security middleware with relaxed policies for development
+app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "unsafe-none" },
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
+
+// More permissive CORS for development
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    // Allow all localhost origins for development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      return callback(null, true);
+    }
+
+    // Allow specific origins
+    const allowedOrigins = [
+      process.env.CORS_ORIGIN || 'http://localhost:5173',
+      'http://localhost:3000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://127.0.0.1:5173'
+    ];
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+app.use(cors(corsOptions));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -53,9 +84,23 @@ app.use('/api/stories', storiesRoutes);
 
 // Serve static files for local storage (when not using S3)
 app.use('/uploads', (req, res, next) => {
-  res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'http://localhost:5173');
-  res.header('Access-Control-Allow-Methods', 'GET');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  // More permissive CORS headers for images
+  const origin = req.headers.origin;
+  if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || 'http://localhost:5173');
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.header('Access-Control-Allow-Credentials', 'true');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+    return;
+  }
+
   next();
 }, express.static(path.join(__dirname, 'uploads')));
 
@@ -81,6 +126,24 @@ app.get('/api/test-image/:filename', (req, res) => {
     if (err) {
       console.error('Error serving test image:', err);
       res.status(404).json({ error: 'Image not found', filename });
+    }
+  });
+});
+
+// Image proxy endpoint for CORS-safe image serving
+app.get('/api/image/*', (req, res) => {
+  const imagePath = req.params[0]; // Get the full path after /api/image/
+  const fullPath = path.join(__dirname, 'uploads', imagePath);
+
+  // Set CORS headers explicitly
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+  res.sendFile(fullPath, (err) => {
+    if (err) {
+      console.error('Error serving image:', err);
+      res.status(404).json({ error: 'Image not found', path: imagePath });
     }
   });
 });

@@ -28,6 +28,12 @@ const SharePage = () => {
     }
   }, [shareId]);
 
+  useEffect(() => {
+    if (story) {
+      navigate(`/story/${story.id}`);
+    }
+  }, [story, navigate]);
+
   const fetchStory = async () => {
     try {
       setLoading(true);

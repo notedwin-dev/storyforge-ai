@@ -164,7 +164,9 @@ const LibraryPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold gradient-text mb-4">Story Library</h1>
+          <h1 className="text-4xl font-bold gradient-text mb-4">
+            Story Library
+          </h1>
           <p className="text-gray-600 dark:text-gray-300">
             Manage and explore all your generated stories
           </p>
@@ -192,10 +194,11 @@ const LibraryPage = () => {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="input pr-10 appearance-none"
-              >
-                {FILTER_OPTIONS.map(option => (
-                  <option key={option.id} value={option.id}>
+                className="input pr-10 appearance-none">
+                {FILTER_OPTIONS.map((option) => (
+                  <option
+                    key={option.id}
+                    value={option.id}>
                     {option.label}
                   </option>
                 ))}
@@ -208,10 +211,11 @@ const LibraryPage = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="input pr-10 appearance-none"
-              >
-                {SORT_OPTIONS.map(option => (
-                  <option key={option.id} value={option.id}>
+                className="input pr-10 appearance-none">
+                {SORT_OPTIONS.map((option) => (
+                  <option
+                    key={option.id}
+                    value={option.id}>
                     {option.label}
                   </option>
                 ))}
@@ -228,8 +232,7 @@ const LibraryPage = () => {
               </span>
               <button
                 onClick={handleBulkDelete}
-                className="text-red-600 hover:text-red-700 font-medium flex items-center"
-              >
+                className="text-red-600 hover:text-red-700 font-medium flex items-center">
                 <Trash2 className="w-4 h-4 mr-1" />
                 Delete Selected
               </button>
@@ -242,19 +245,19 @@ const LibraryPage = () => {
           <div className="text-center py-12">
             <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {stories.length === 0 ? 'No stories yet' : 'No stories match your search'}
+              {stories.length === 0
+                ? "No stories yet"
+                : "No stories match your search"}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              {stories.length === 0 
-                ? 'Create your first story to get started!'
-                : 'Try adjusting your search or filters.'
-              }
+              {stories.length === 0
+                ? "Create your first story to get started!"
+                : "Try adjusting your search or filters."}
             </p>
             {stories.length === 0 && (
               <a
                 href="/create"
-                className="btn-primary"
-              >
+                className="btn-primary">
                 Create Story
               </a>
             )}
@@ -266,8 +269,7 @@ const LibraryPage = () => {
                 key={story.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="card-hover overflow-hidden"
-              >
+                className="card-hover overflow-hidden">
                 {/* Story Thumbnail/Video */}
                 <div className="relative h-48 bg-linear-to-br from-primary-100 to-accent-100">
                   {story.videoUrl ? (
@@ -281,7 +283,7 @@ const LibraryPage = () => {
                       <BookOpen className="w-12 h-12 text-primary-400" />
                     </div>
                   )}
-                  
+
                   {/* Selection Checkbox */}
                   <div className="absolute top-3 left-3">
                     <input
@@ -314,9 +316,9 @@ const LibraryPage = () => {
                 {/* Story Info */}
                 <div className="p-6">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-                    {story.title || 'Untitled Story'}
+                    {story.title || "Untitled Story"}
                   </h3>
-                  
+
                   <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
                     {story.content?.slice(0, 150)}...
                   </p>
@@ -329,7 +331,7 @@ const LibraryPage = () => {
                     </div>
                     <div className="flex items-center">
                       <Clock className="w-3 h-3 mr-1" />
-                      {story.estimatedDuration || '10-15 min'}
+                      {story.estimatedDuration || "10-15 min"}
                     </div>
                     <div className="flex items-center">
                       <User className="w-3 h-3 mr-1" />
@@ -341,18 +343,22 @@ const LibraryPage = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => handleDownload(story)}
-                      className="flex-1 btn-secondary text-sm py-2"
-                    >
+                      className="flex-1 btn-secondary text-sm py-2">
                       <Download className="w-3 h-3 mr-1" />
                       Download
                     </button>
                     <button
                       onClick={() => handleShare(story)}
-                      className="flex-1 btn-secondary text-sm py-2"
-                    >
+                      className="flex-1 btn-secondary text-sm py-2">
                       <Share2 className="w-3 h-3 mr-1" />
                       Share
                     </button>
+                    <a
+                      href={`/story/${story.id}`}
+                      className="flex-1 btn-primary text-sm py-2">
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      Open
+                    </a>
                   </div>
                 </div>
               </motion.div>

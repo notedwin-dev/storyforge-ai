@@ -20,8 +20,17 @@ export const getServerBaseURL = () => {
 
 // Helper function to construct full image URLs
 export const getImageURL = (relativePath) => {
-  if (!relativePath) return null
+  if (!relativePath || typeof relativePath !== 'string') return null
   if (relativePath.startsWith('http')) return relativePath // Already full URL
+
+  // For local uploads, use the API proxy endpoint to avoid CORS issues
+  if (relativePath.startsWith('/uploads/')) {
+    const serverBaseUrl = getServerBaseURL()
+    // Remove /uploads/ and use the full path after that
+    const imagePath = relativePath.replace('/uploads/', '')
+    return `${serverBaseUrl}/api/image/${imagePath}`
+  }
+
   return `${getServerBaseURL()}${relativePath}`
 }
 

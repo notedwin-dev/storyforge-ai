@@ -53,20 +53,19 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="w-full max-w-4xl mx-auto space-y-6"
-    >
+      className="w-full max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="card p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {story.title || 'Your Generated Story'}
+              {story.title || "Your Generated Story"}
             </h2>
             <div className="flex items-center text-gray-600 space-x-4">
               <div className="flex items-center">
                 <Clock className="w-4 h-4 mr-1" />
                 <span className="text-sm">
-                  {story.estimatedDuration || '10-15 min'}
+                  {story.estimatedDuration || "10-15 min"}
                 </span>
               </div>
               <div className="flex items-center">
@@ -82,14 +81,13 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
               )}
             </div>
           </div>
-          
+
           {story.videoUrl && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onPlayVideo}
-              className="btn-accent ml-4"
-            >
+              className="btn-accent ml-4">
               <Play className="w-4 h-4 mr-2" />
               Play Video
             </motion.button>
@@ -102,8 +100,7 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onDownload}
-            className="btn-primary"
-          >
+            className="btn-primary">
             <Download className="w-4 h-4 mr-2" />
             Download
           </motion.button>
@@ -112,8 +109,7 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onShare}
-            className="btn-secondary"
-          >
+            className="btn-secondary">
             <Share2 className="w-4 h-4 mr-2" />
             Share
           </motion.button>
@@ -122,8 +118,7 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onEdit}
-            className="btn-secondary"
-          >
+            className="btn-secondary">
             <Edit3 className="w-4 h-4 mr-2" />
             Edit
           </motion.button>
@@ -143,10 +138,9 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeTab === tab.id
-                      ? 'border-primary-500 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
+                      ? "border-primary-500 text-primary-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}>
                   <Icon className="w-4 h-4 mr-2" />
                   {tab.label}
                 </button>
@@ -158,14 +152,13 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
         {/* Tab Content */}
         <div className="p-6">
           <AnimatePresence mode="wait">
-            {activeTab === 'story' && (
+            {activeTab === "story" && (
               <motion.div
                 key="story"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 <div className="prose max-w-none">
                   <div className="whitespace-pre-wrap leading-relaxed">
                     {isExpanded ? (
@@ -173,17 +166,18 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
                     ) : (
                       <div className="text-white">{previewText}</div>
                     )}
-                    {!isExpanded && showExpandButton && <span className="text-white">...</span>}
+                    {!isExpanded && showExpandButton && (
+                      <span className="text-white">...</span>
+                    )}
                   </div>
                 </div>
-                
+
                 {showExpandButton && (
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="flex items-center text-primary-600 hover:text-primary-700 font-medium"
-                  >
+                    className="flex items-center text-primary-600 hover:text-primary-700 font-medium">
                     {isExpanded ? (
                       <>
                         <ChevronUp className="w-4 h-4 mr-1" />
@@ -200,62 +194,68 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
               </motion.div>
             )}
 
-            {activeTab === 'audio' && (
+            {activeTab === "audio" && (
               <motion.div
                 key="audio"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 <AudioVisualizer
                   audioNarration={story.audio_narration}
-                  storyTitle={story.title || 'Your Story'}
+                  storyTitle={story.title || "Your Story"}
                   onSceneChange={(sceneIndex) => {
                     // Optional: Could sync with storyboard view
-                    console.log('Audio scene changed to:', sceneIndex);
+                    console.log("Audio scene changed to:", sceneIndex);
                   }}
                 />
               </motion.div>
             )}
 
-            {activeTab === 'characters' && (
+            {activeTab === "characters" && (
               <motion.div
                 key="characters"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 {story.characters && story.characters.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {story.characters.map((character, index) => (
-                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <div
+                        key={index}
+                        className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-start space-x-3">
-                          {character.imageUrl && (
+                          {(character.imageUrl || character.thumbnailUrl) && (
                             <img
-                              src={character.imageUrl}
+                              src={character.imageUrl || character.thumbnailUrl}
                               alt={character.name}
                               className="w-12 h-12 rounded-full object-cover"
                             />
                           )}
                           <div className="flex-1">
-                            <h4 className="font-semibold text-gray-900">{character.name}</h4>
+                            <h4 className="font-semibold text-gray-900">
+                              {character.name}
+                            </h4>
                             {character.description && (
-                              <p className="text-sm text-gray-600 mt-1">{character.description}</p>
+                              <p className="text-sm text-gray-600 mt-1">
+                                {character.description}
+                              </p>
                             )}
-                            {character.traits && character.traits.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {character.traits.slice(0, 3).map((trait, i) => (
-                                  <span
-                                    key={i}
-                                    className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded"
-                                  >
-                                    {trait}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+                            {character.traits &&
+                              character.traits.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-2">
+                                  {character.traits
+                                    .slice(0, 3)
+                                    .map((trait, i) => (
+                                      <span
+                                        key={i}
+                                        className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                                        {trait}
+                                      </span>
+                                    ))}
+                                </div>
+                              )}
                           </div>
                         </div>
                       </div>
@@ -264,44 +264,56 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
                 ) : (
                   <div className="text-center py-8">
                     <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">No character information available</p>
+                    <p className="text-gray-600">
+                      No character information available
+                    </p>
                   </div>
                 )}
               </motion.div>
             )}
 
-            {activeTab === 'scenes' && (
+            {activeTab === "scenes" && (
               <motion.div
                 key="scenes"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 {story.sceneUrls && story.sceneUrls.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {story.sceneUrls.map((imageUrl, index) => {
                       // Handle relative URLs by adding server prefix if needed
-                      const fullImageUrl = imageUrl.startsWith('/') 
-                        ? `http://localhost:3001${imageUrl}` 
-                        : imageUrl;
-                      
+                      const fullImageUrl =
+                        imageUrl &&
+                        typeof imageUrl === "string" &&
+                        imageUrl.startsWith("/")
+                          ? `http://localhost:3001${imageUrl}`
+                          : imageUrl;
+
                       return (
-                        <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div
+                          key={index}
+                          className="border border-gray-200 rounded-lg overflow-hidden">
                           <img
                             src={fullImageUrl}
                             alt={`Scene ${index + 1}`}
                             className="w-full h-48 object-cover"
                             onError={(e) => {
-                              console.log(`Failed to load scene image: ${fullImageUrl}`);
+                              console.log(
+                                `Failed to load scene image: ${fullImageUrl}`
+                              );
                               e.target.src = `https://picsum.photos/400/300?random=${index}`;
                             }}
                             onLoad={() => {
-                              console.log(`Successfully loaded scene image: ${fullImageUrl}`);
+                              console.log(
+                                `Successfully loaded scene image: ${fullImageUrl}`
+                              );
                             }}
                           />
                           <div className="p-3">
-                            <h4 className="font-medium text-gray-900">Scene {index + 1}</h4>
+                            <h4 className="font-medium text-gray-900">
+                              Scene {index + 1}
+                            </h4>
                             {story.scenes && story.scenes[index] && (
                               <p className="text-sm text-gray-600 mt-1">
                                 {story.scenes[index].title}
@@ -316,44 +328,56 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
                   <div className="text-center py-8">
                     <Image className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                     <p className="text-gray-600">No scene images available</p>
-                    {console.log('Story sceneUrls:', story.sceneUrls)}
+                    {console.log("Story sceneUrls:", story.sceneUrls)}
                   </div>
                 )}
               </motion.div>
             )}
 
-            {activeTab === 'storyboard' && (
+            {activeTab === "storyboard" && (
               <motion.div
                 key="storyboard"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-4"
-              >
+                className="space-y-4">
                 {story.storyboardUrls && story.storyboardUrls.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {story.storyboardUrls.map((imageUrl, index) => {
                       // Handle relative URLs by adding server prefix if needed
-                      const fullImageUrl = imageUrl.startsWith('/') 
-                        ? `http://localhost:3001${imageUrl}` 
-                        : imageUrl;
-                      
+                      const fullImageUrl =
+                        imageUrl &&
+                        typeof imageUrl === "string" &&
+                        imageUrl.startsWith("/")
+                          ? `http://localhost:3001${imageUrl}`
+                          : imageUrl;
+
                       return (
-                        <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div
+                          key={index}
+                          className="border border-gray-200 rounded-lg overflow-hidden">
                           <img
                             src={fullImageUrl}
                             alt={`Storyboard ${index + 1}`}
                             className="w-full h-64 object-cover"
                             onError={(e) => {
-                              console.log(`Failed to load storyboard image: ${fullImageUrl}`);
-                              e.target.src = `https://picsum.photos/600/400?random=${index + 100}`;
+                              console.log(
+                                `Failed to load storyboard image: ${fullImageUrl}`
+                              );
+                              e.target.src = `https://picsum.photos/600/400?random=${
+                                index + 100
+                              }`;
                             }}
                             onLoad={() => {
-                              console.log(`Successfully loaded storyboard image: ${fullImageUrl}`);
+                              console.log(
+                                `Successfully loaded storyboard image: ${fullImageUrl}`
+                              );
                             }}
                           />
                           <div className="p-3">
-                            <h4 className="font-medium text-gray-900">Storyboard {index + 1}</h4>
+                            <h4 className="font-medium text-gray-900">
+                              Storyboard {index + 1}
+                            </h4>
                             {story.scenes && story.scenes[index] && (
                               <p className="text-sm text-gray-600 mt-1">
                                 {story.scenes[index].title}
@@ -367,65 +391,100 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
                 ) : (
                   <div className="text-center py-8">
                     <Film className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">No storyboard images available</p>
-                    {console.log('Story storyboardUrls:', story.storyboardUrls)}
+                    <p className="text-gray-600">
+                      No storyboard images available
+                    </p>
+                    {console.log("Story storyboardUrls:", story.storyboardUrls)}
                   </div>
                 )}
               </motion.div>
             )}
 
-            {activeTab === 'metadata' && (
+            {activeTab === "metadata" && (
               <motion.div
                 key="metadata"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
+                className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Story Details</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3">
+                      Story Details
+                    </h4>
                     <div className="space-y-3">
                       <div>
-                        <span className="text-sm font-medium text-gray-600">Type: </span>
-                        <span className="ml-1 text-sm text-gray-900">{story.type || 'Not specified'}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Tone: </span>
-                        <span className="ml-1 text-sm text-gray-900">{story.tone || 'Not specified'}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Length: </span>
-                        <span className="ml-1 text-sm text-gray-900">{story.length || 'Not specified'}</span>
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-gray-600">Word Count: </span>
+                        <span className="text-sm font-medium text-gray-600">
+                          Type:{" "}
+                        </span>
                         <span className="ml-1 text-sm text-gray-900">
-                          {story.content ? story.content.split(' ').length : 0} words
+                          {story.type || "Not specified"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">
+                          Tone:{" "}
+                        </span>
+                        <span className="ml-1 text-sm text-gray-900">
+                          {story.tone || "Not specified"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">
+                          Length:{" "}
+                        </span>
+                        <span className="ml-1 text-sm text-gray-900">
+                          {story.length || "Not specified"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">
+                          Word Count:{" "}
+                        </span>
+                        <span className="ml-1 text-sm text-gray-900">
+                          {story.content?.split(" ").length || 0} words
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">
+                          Scenes:{" "}
+                        </span>
+                        <span className="ml-1 text-sm text-gray-900">
+                          {story.scenes?.length || 0} scenes
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Generation Info</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3">
+                      Generation Info
+                    </h4>
                     <div className="space-y-3">
                       <div>
-                        <span className="text-sm font-medium text-gray-600">Created: </span>
+                        <span className="text-sm font-medium text-gray-600">
+                          Created:{" "}
+                        </span>
                         <span className="ml-1 text-sm text-gray-900">
-                          {story.createdAt ? new Date(story.createdAt).toLocaleString() : 'Unknown'}
+                          {story.createdAt
+                            ? new Date(story.createdAt).toLocaleString()
+                            : "Unknown"}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-600">Voice: </span>
+                        <span className="text-sm font-medium text-gray-600">
+                          Voice:{" "}
+                        </span>
                         <span className="ml-1 text-sm text-gray-900">
-                          {story.includeVoice ? 'Included' : 'Not included'}
+                          {story.includeVoice ? "Included" : "Not included"}
                         </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-gray-600">Video: </span>
+                        <span className="text-sm font-medium text-gray-600">
+                          Video:{" "}
+                        </span>
                         <span className="ml-1 text-sm text-gray-900">
-                          {story.includeVideo ? 'Included' : 'Not included'}
+                          {story.includeVideo ? "Included" : "Not included"}
                         </span>
                       </div>
                     </div>
@@ -434,9 +493,13 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
 
                 {story.prompt && (
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Original Prompt</h4>
+                    <h4 className="font-semibold text-gray-900 mb-3">
+                      Original Prompt
+                    </h4>
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{story.prompt}</p>
+                      <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                        {story.prompt}
+                      </p>
                     </div>
                   </div>
                 )}

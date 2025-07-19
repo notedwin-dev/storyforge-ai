@@ -3,7 +3,7 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs').promises;
 const { generateStory } = require('../services/storyEngine');
-const { generateSceneImages } = require('../services/imageGeneration');
+const { generateSceneImages, generateCharacterConsistentScenes } = require('../services/imageGeneration');
 const { generateVideo } = require('../services/videoGeneration');
 const { getDemoCharacter } = require('../services/clip');
 const { validateGenerationRequest } = require('../middleware/validation');
@@ -510,7 +510,40 @@ async function generateStoryAsync(jobId) {
     try {
       const storyScenes = story.story?.scenes || story.scenes || [];
       console.log(`🎨 Found ${storyScenes.length} scenes for storyboard generation`);
-      storyboardImages = await stableDiffusion.generateMultipleStoryboards(storyScenes, job.style, characterDNA);
+
+      // Check if character consistency is enabled
+      const useCharacterConsistency = job.options?.characterConsistency !== false; // Default to true
+
+      if (useCharacterConsistency) {
+        console.log(`🎭 Using character-consistent scene generation...`);
+
+        // Try character-consistent generation first
+        try {
+          const consistentImages = await generateCharacterConsistentScenes(storyScenes, characterDNA, job.style);
+
+          if (consistentImages && consistentImages.length > 0) {
+            console.log(`✅ Generated ${consistentImages.length} character-consistent images`);
+            storyboardImages = consistentImages.map(img => ({
+              sceneId: img.scene_id,
+              imageUrl: img.url,
+              prompt: img.prompt,
+              style: img.style,
+              characterBased: img.character_based,
+              metadata: img.metadata
+            }));
+          } else {
+            throw new Error('No character-consistent images generated');
+          }
+        } catch (consistencyError) {
+          console.warn('⚠️ Character-consistent generation failed, falling back to standard:', consistencyError.message);
+          // Fallback to standard storyboard generation
+          storyboardImages = await stableDiffusion.generateMultipleStoryboards(storyScenes, job.style, characterDNA);
+        }
+      } else {
+        console.log(`🎨 Using standard storyboard generation...`);
+        storyboardImages = await stableDiffusion.generateMultipleStoryboards(storyScenes, job.style, characterDNA);
+      }
+
       console.log(`✅ Generated ${storyboardImages.length} storyboard images`);
     } catch (storyboardError) {
       console.warn('⚠️ Storyboard generation failed:', storyboardError.message);

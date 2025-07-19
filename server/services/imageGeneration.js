@@ -1,9 +1,11 @@
 const { InferenceClient } = require('@huggingface/inference');
 const { uploadToStorage } = require('./storage');
 const { v4: uuidv4 } = require('uuid');
+const { PythonStableDiffusionService } = require('./pythonStableDiffusion');
 
-// Initialize Hugging Face client
+// Initialize services
 const hf = new InferenceClient(process.env.HUGGING_FACE_TOKEN);
+const pythonSD = new PythonStableDiffusionService();
 
 const STYLE_PRESETS = {
   cartoon: 'cartoon style, animated, vibrant colors, friendly, family-friendly',
@@ -51,16 +53,21 @@ async function generateSingleSceneImage(scene, characterDNA, stylePrompt, sceneI
   try {
     // Build comprehensive prompt for consistent character rendering
     const characterDescription = buildCharacterDescription(characterDNA);
-    const scenePrompt = `${characterDescription}, ${scene.description}, ${stylePrompt}, high quality, detailed, 4k resolution`;
+    const fullScenePrompt = `${characterDescription}, ${scene.description}, ${stylePrompt}, high quality, detailed, 4k resolution`;
+
+    // Optimize prompt for CLIP token limits
+    const optimizedPrompt = optimizePromptForCLIP(fullScenePrompt);
 
     if (process.env.DEMO_MODE === 'true') {
       return generateDemoImage(scene, sceneIndex);
     }
 
+    console.log(`🎨 Generating scene ${sceneIndex + 1} with optimized prompt (${optimizedPrompt.split(' ').length} words)`);
+
     // Use SDXL for image generation with Hugging Face library
     const imageBlob = await hf.textToImage({
       model: 'stabilityai/stable-diffusion-xl-base-1.0',
-      inputs: scenePrompt,
+      inputs: optimizedPrompt,
       parameters: {
         negative_prompt: 'blurry, low quality, distorted, ugly, bad anatomy, extra limbs',
         num_inference_steps: 25,
@@ -79,7 +86,10 @@ async function generateSingleSceneImage(scene, characterDNA, stylePrompt, sceneI
 
     return {
       url: imageUrl,
-      prompt: scenePrompt
+      prompt: optimizedPrompt,
+      originalPromptWords: fullScenePrompt.split(' ').length,
+      optimizedPromptWords: optimizedPrompt.split(' ').length,
+      promptOptimized: fullScenePrompt.split(' ').length > optimizedPrompt.split(' ').length
     };
 
   } catch (error) {
@@ -89,11 +99,10 @@ async function generateSingleSceneImage(scene, characterDNA, stylePrompt, sceneI
 }
 
 function buildCharacterDescription(characterDNA) {
-  // Extract visual features from character DNA
-  // In a real implementation, this would analyze the character image
+  // Extract visual features from character DNA (optimized for CLIP token limits)
   const baseDescription = `character named ${characterDNA.name}`;
   
-  // Add tags if available
+  // Add tags if available (limit to top 3 visual tags)
   if (characterDNA.tags && characterDNA.tags.length > 0) {
     const visualTags = characterDNA.tags.filter(tag => 
       ['hair', 'eyes', 'clothes', 'style', 'color'].some(keyword => 
@@ -102,11 +111,61 @@ function buildCharacterDescription(characterDNA) {
     );
     
     if (visualTags.length > 0) {
-      return `${baseDescription}, ${visualTags.join(', ')}`;
+      // Limit to 3 most important visual tags to save tokens
+      return `${baseDescription}, ${visualTags.slice(0, 3).join(', ')}`;
     }
   }
   
   return baseDescription;
+}
+
+function optimizePromptForCLIP(prompt, maxWords = 75) {
+  // Simple word-based optimization for CLIP's ~77 token limit
+  const words = prompt.split(/\s+/);
+
+  if (words.length <= maxWords) {
+    return prompt;
+  }
+
+  console.log(`⚠️ Prompt too long (${words.length} words), optimizing for CLIP...`);
+
+  // Priority keywords for image generation
+  const priorityKeywords = [
+    'character', 'scene', 'story', 'cartoon', 'anime', 'illustration',
+    'high quality', 'detailed', 'clean', 'bright', 'friendly',
+    'cinematic', 'storybook', 'watercolor', 'vibrant'
+  ];
+
+  // Separate priority and regular words
+  const priorityWords = [];
+  const regularWords = [];
+
+  words.forEach(word => {
+    const wordLower = word.toLowerCase();
+    if (priorityKeywords.some(keyword => wordLower.includes(keyword.split(' ')[0]))) {
+      priorityWords.push(word);
+    } else {
+      regularWords.push(word);
+    }
+  });
+
+  // Reconstruct with priorities first
+  const optimizedWords = [];
+
+  // Add priority words first (up to 40 words)
+  const priorityLimit = Math.min(priorityWords.length, 40);
+  optimizedWords.push(...priorityWords.slice(0, priorityLimit));
+
+  // Add regular words to fill remaining space
+  const remainingSpace = maxWords - optimizedWords.length;
+  if (remainingSpace > 0) {
+    optimizedWords.push(...regularWords.slice(0, remainingSpace));
+  }
+
+  const optimizedPrompt = optimizedWords.join(' ');
+  console.log(`✅ Optimized prompt: ${words.length} → ${optimizedWords.length} words`);
+
+  return optimizedPrompt;
 }
 
 async function generateDemoImage(scene, sceneIndex) {
@@ -209,9 +268,109 @@ async function generateBackground(scene, environment) {
   }
 }
 
+async function generateCharacterConsistentScenes(scenes, characterDNA, style = 'cartoon') {
+  try {
+    console.log(`🎭 Generating ${scenes.length} character-consistent scenes in ${style} style`);
+    console.log(`👤 Character: ${characterDNA.name}`);
+
+    // Check if Python SD service is available
+    const connectionCheck = await pythonSD.checkConnection();
+    if (!connectionCheck.available) {
+      console.warn('⚠️ Python SD service not available, falling back to standard generation');
+      return await generateSceneImages(scenes, characterDNA, style);
+    }
+
+    const sceneImages = [];
+
+    // Step 1: Generate character portrait for consistency
+    console.log('📸 Step 1: Generating character portrait...');
+    const portraitResult = await pythonSD.generateCharacterPortrait(characterDNA, style);
+
+    if (!portraitResult.success) {
+      console.warn('⚠️ Character portrait generation failed, falling back to standard generation');
+      return await generateSceneImages(scenes, characterDNA, style);
+    }
+
+    console.log(`✅ Character portrait generated successfully`);
+
+    // Step 2: Generate each scene using the character for consistency
+    console.log(`🎬 Step 2: Generating ${scenes.length} scenes with character consistency...`);
+
+    for (let i = 0; i < scenes.length; i++) {
+      const scene = scenes[i];
+      console.log(`🎬 Generating scene ${i + 1}/${scenes.length}: ${scene.title}`);
+
+      try {
+        const sceneResult = await pythonSD.generateSceneWithCharacter(
+          scene.description,
+          characterDNA,
+          style,
+          scene.id || `scene_${i + 1}`,
+          0.7 // Good balance between consistency and variety
+        );
+
+        if (sceneResult.success) {
+          sceneImages.push({
+            scene_id: scene.id,
+            scene_number: i + 1,
+            url: sceneResult.imageUrl,
+            prompt: sceneResult.prompt,
+            style: style,
+            character_based: true,
+            strength: sceneResult.strength,
+            metadata: sceneResult.metadata
+          });
+          console.log(`✅ Scene ${i + 1} generated successfully`);
+        } else {
+          console.warn(`⚠️ Scene ${i + 1} failed, generating fallback...`);
+          // Fallback to standard generation for this scene
+          const fallbackResult = await generateSingleSceneImage(scene, characterDNA, STYLE_PRESETS[style] || STYLE_PRESETS.cartoon, i);
+          sceneImages.push({
+            scene_id: scene.id,
+            scene_number: i + 1,
+            url: fallbackResult.url,
+            prompt: fallbackResult.prompt,
+            style: style,
+            character_based: false,
+            fallback: true
+          });
+        }
+      } catch (sceneError) {
+        console.warn(`⚠️ Scene ${i + 1} generation error, using fallback:`, sceneError.message);
+        // Fallback to standard generation
+        const fallbackResult = await generateSingleSceneImage(scene, characterDNA, STYLE_PRESETS[style] || STYLE_PRESETS.cartoon, i);
+        sceneImages.push({
+          scene_id: scene.id,
+          scene_number: i + 1,
+          url: fallbackResult.url,
+          prompt: fallbackResult.prompt,
+          style: style,
+          character_based: false,
+          fallback: true
+        });
+      }
+    }
+
+    const successfulScenes = sceneImages.filter(scene => scene.character_based).length;
+    const totalScenes = sceneImages.length;
+
+    console.log(`🎉 Character-consistent generation complete!`);
+    console.log(`📊 Results: ${successfulScenes}/${totalScenes} scenes with character consistency`);
+
+    return sceneImages;
+
+  } catch (error) {
+    console.error('Character-consistent scene generation error:', error);
+    console.warn('⚠️ Falling back to standard scene generation');
+    // Fallback to standard generation
+    return await generateSceneImages(scenes, characterDNA, style);
+  }
+}
+
 module.exports = {
   generateSceneImages,
   generateSingleSceneImage,
+  generateCharacterConsistentScenes, // New function for character consistency
   applyStyleTransfer,
   generateBackground,
   STYLE_PRESETS

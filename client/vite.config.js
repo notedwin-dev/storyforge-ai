@@ -6,6 +6,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    cors: {
+      origin: [
+        'http://localhost:5173',
+        'https://www.soundjay.com',
+        'https://api.elevenlabs.io'
+      ],
+      credentials: true
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',

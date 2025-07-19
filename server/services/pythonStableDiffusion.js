@@ -4,13 +4,16 @@ const path = require('path');
 
 class PythonStableDiffusionService {
   constructor() {
-    // Python service endpoint
+    // Python service endpoint - updated to match the enhanced service
     this.serviceUrl = process.env.PYTHON_SD_URL || 'http://127.0.0.1:8080';
     this.enabled = process.env.USE_PYTHON_SD === 'true';
     
     // Timeout settings - reduced for faster failures
     this.healthTimeout = 3000;      // 3 seconds for health checks
     this.generateTimeout = 120000;  // 2 minutes for generation
+
+    // Character image cache for consistent generation
+    this.characterImageCache = new Map();
   }
 
   async checkConnection() {
@@ -151,9 +154,266 @@ class PythonStableDiffusionService {
     }
   }
 
+  async generateCharacterPortrait(characterDNA, style = 'cartoon') {
+    // Generate a character portrait to use for consistent scene generation
+    try {
+      console.log(`🎭 Generating character portrait for: ${characterDNA.name}`);
+
+      const connectionCheck = await this.checkConnection();
+      if (!connectionCheck.available) {
+        throw new Error(connectionCheck.error);
+      }
+
+      // Build character description from DNA
+      const characterDescription = this.buildCharacterDescription(characterDNA);
+      const portraitPrompt = `portrait of ${characterDescription}, centered, clear view, character design, full body visible`;
+      const enhancedPrompt = this.enhancePromptForStoryboard(portraitPrompt, style);
+
+      const payload = {
+        prompt: enhancedPrompt,
+        style: style,
+        seed: characterDNA.id ? this.hashStringToSeed(characterDNA.id) : null // Consistent seed for character
+      };
+
+      console.log(`🔧 Generating character portrait with style: ${style}`);
+
+      const generatePromise = axios.post(`${this.serviceUrl}/generate`, payload, {
+        timeout: this.generateTimeout,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Character portrait generation timeout')), this.generateTimeout + 5000);
+      });
+
+      const response = await Promise.race([generatePromise, timeoutPromise]);
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Character portrait generation failed');
+      }
+
+      // Cache the character image
+      const characterKey = `${characterDNA.id}_${style}`;
+      this.characterImageCache.set(characterKey, response.data.image);
+
+      console.log(`✅ Character portrait generated successfully for: ${characterDNA.name}`);
+
+      return {
+        success: true,
+        characterImage: response.data.image,
+        characterKey,
+        prompt: enhancedPrompt,
+        metadata: response.data.metadata
+      };
+
+    } catch (error) {
+      console.error('Character portrait generation error:', error);
+
+      return {
+        success: false,
+        error: error.message,
+        characterId: characterDNA.id,
+        characterName: characterDNA.name
+      };
+    }
+  }
+
+  async generateSceneWithCharacter(prompt, characterDNA, style = 'cartoon', sceneId, strength = 0.7) {
+    // Generate a scene using character image for consistency
+    try {
+      console.log(`🎬 Generating character-consistent scene for: ${sceneId}`);
+
+      const connectionCheck = await this.checkConnection();
+      if (!connectionCheck.available) {
+        throw new Error(connectionCheck.error);
+      }
+
+      // Get or generate character portrait
+      const characterKey = `${characterDNA.id}_${style}`;
+      let characterImage = this.characterImageCache.get(characterKey);
+
+      if (!characterImage) {
+        console.log(`📸 Character portrait not cached, generating...`);
+        const portraitResult = await this.generateCharacterPortrait(characterDNA, style);
+
+        if (!portraitResult.success) {
+          throw new Error(`Failed to generate character portrait: ${portraitResult.error}`);
+        }
+
+        characterImage = portraitResult.characterImage;
+      }
+
+      // Enhance scene prompt for character consistency
+      const characterDescription = this.buildCharacterDescription(characterDNA);
+      const scenePrompt = `${characterDescription} ${prompt}, same character, consistent art style`;
+      const enhancedPrompt = this.enhancePromptForStoryboard(scenePrompt, style);
+
+      const payload = {
+        prompt: enhancedPrompt,
+        character_image: characterImage,
+        style: style,
+        strength: strength,
+        seed: sceneId ? this.hashStringToSeed(sceneId.toString()) : null
+      };
+
+      console.log(`🔧 Generating scene with character consistency, style: ${style}, strength: ${strength}`);
+
+      const generatePromise = axios.post(`${this.serviceUrl}/generate-scene`, payload, {
+        timeout: this.generateTimeout,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Scene generation timeout')), this.generateTimeout + 5000);
+      });
+
+      const response = await Promise.race([generatePromise, timeoutPromise]);
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Character-consistent scene generation failed');
+      }
+
+      // Decode base64 image and save
+      const base64Image = response.data.image;
+      const imageBuffer = Buffer.from(base64Image, 'base64');
+      const imageUrl = await this.saveImage(imageBuffer, sceneId, style);
+
+      console.log(`✅ Character-consistent scene generated successfully for: ${sceneId}`);
+
+      return {
+        success: true,
+        imageUrl,
+        sceneId,
+        style,
+        prompt: enhancedPrompt,
+        characterBased: true,
+        strength,
+        metadata: response.data.metadata
+      };
+
+    } catch (error) {
+      console.error('Character-consistent scene generation error:', error);
+
+      return {
+        success: false,
+        error: error.message,
+        sceneId,
+        style,
+        prompt,
+        characterBased: true
+      };
+    }
+  }
+
+  buildCharacterDescription(characterDNA) {
+    // Build character description from DNA for consistent generation
+    let description = characterDNA.name || 'character';
+
+    // Add visual characteristics if available (keep it concise)
+    if (characterDNA.tags && characterDNA.tags.length > 0) {
+      const visualTags = characterDNA.tags.filter(tag =>
+        ['hair', 'eyes', 'clothes', 'style', 'color', 'skin', 'appearance'].some(keyword =>
+          tag.toLowerCase().includes(keyword)
+        )
+      );
+
+      if (visualTags.length > 0) {
+        // Limit to top 3 visual tags to save tokens
+        description += `, ${visualTags.slice(0, 3).join(', ')}`;
+      }
+    }
+
+    // Add appearance description but keep it short
+    if (characterDNA.appearance) {
+      // Take only first 30 words of appearance description
+      const appearanceWords = characterDNA.appearance.split(' ').slice(0, 30).join(' ');
+      description += `, ${appearanceWords}`;
+    } else if (characterDNA.description) {
+      // Extract visual elements from description (first 20 words)
+      const visualKeywords = ['hair', 'eyes', 'wearing', 'dressed', 'tall', 'short', 'young', 'old'];
+      const descriptionWords = characterDNA.description.toLowerCase().split(' ');
+      const hasVisualDescription = visualKeywords.some(keyword =>
+        descriptionWords.includes(keyword)
+      );
+
+      if (hasVisualDescription) {
+        const shortDescription = characterDNA.description.split(' ').slice(0, 20).join(' ');
+        description += `, ${shortDescription}`;
+      }
+    }
+
+    // Optimize the character description for CLIP limits
+    return this.optimizePromptForCLIP(description, 25); // Reserve 25 words for character
+  } hashStringToSeed(str) {
+    // Convert string to consistent numeric seed
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash) % 2147483647; // Ensure positive number within range
+  }
+
   enhancePromptForStoryboard(prompt, style) {
     const baseEnhancement = 'high quality, detailed, professional storyboard panel, clear composition, sequential art';
-    return `${prompt}, ${baseEnhancement}`;
+    const fullPrompt = `${prompt}, ${baseEnhancement}`;
+
+    // Optimize for CLIP token limit
+    return this.optimizePromptForCLIP(fullPrompt);
+  }
+
+  optimizePromptForCLIP(prompt, maxWords = 75) {
+    // Simple word-based optimization for CLIP's ~77 token limit
+    const words = prompt.split(/\s+/);
+
+    if (words.length <= maxWords) {
+      return prompt;
+    }
+
+    console.log(`⚠️ Prompt too long (${words.length} words), optimizing for CLIP...`);
+
+    // Priority keywords for story generation
+    const priorityKeywords = [
+      'character', 'scene', 'story', 'cartoon', 'anime', 'illustration', 'storyboard',
+      'high quality', 'detailed', 'clean', 'bright', 'friendly', 'professional',
+      'panel', 'composition', 'art', 'style'
+    ];
+
+    // Separate priority and regular words
+    const priorityWords = [];
+    const regularWords = [];
+
+    words.forEach(word => {
+      const wordLower = word.toLowerCase();
+      if (priorityKeywords.some(keyword => wordLower.includes(keyword.split(' ')[0]))) {
+        priorityWords.push(word);
+      } else {
+        regularWords.push(word);
+      }
+    });
+
+    // Reconstruct with priorities first
+    const optimizedWords = [];
+
+    // Add priority words first (up to 40 words)
+    const priorityLimit = Math.min(priorityWords.length, 40);
+    optimizedWords.push(...priorityWords.slice(0, priorityLimit));
+
+    // Add regular words to fill remaining space
+    const remainingSpace = maxWords - optimizedWords.length;
+    if (remainingSpace > 0) {
+      optimizedWords.push(...regularWords.slice(0, remainingSpace));
+    }
+
+    const optimizedPrompt = optimizedWords.join(' ');
+    console.log(`✅ Optimized prompt: ${words.length} → ${optimizedWords.length} words`);
+
+    return optimizedPrompt;
   }
 
   async generateMultipleStoryboards(scenes, style = 'cartoon', characterDNA = null) {
