@@ -19,9 +19,33 @@ from datetime import datetime
 import json
 import re
 
+# Set Hugging Face cache to D drive to avoid filling C drive
+os.environ['HF_HOME'] = 'D:/HuggingFaceCache'
+os.environ['HUGGINGFACE_HUB_CACHE'] = 'D:/HuggingFaceCache/hub'
+os.environ['TRANSFORMERS_CACHE'] = 'D:/HuggingFaceCache/transformers'
+
+# Set PyTorch cache to D drive as well
+os.environ['TORCH_HOME'] = 'D:/PyTorchCache'
+
+# Create cache directories on D drive
+cache_dirs = [
+    'D:/HuggingFaceCache',
+    'D:/HuggingFaceCache/hub',
+    'D:/HuggingFaceCache/transformers',
+    'D:/PyTorchCache'
+]
+
+for cache_dir in cache_dirs:
+    os.makedirs(cache_dir, exist_ok=True)
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Log cache location
+logger.info(f"📁 Models will be cached on D drive: {os.environ['HF_HOME']}")
+logger.info(f"🔥 PyTorch cache on D drive: {os.environ['TORCH_HOME']}")
+logger.info(f"💾 This saves C drive space and uses your larger D drive storage")
 
 app = Flask(__name__)
 CORS(app)
@@ -34,15 +58,15 @@ class LocalSDService:
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.models_cache = {}
         
-        # Style configurations optimized for GTX 1060 (6GB VRAM)
+        # Style configurations optimized for various GPUs
         self.style_configs = {
             "cartoon": {
-                "model_id": "runwayml/stable-diffusion-v1-5",  # Smaller model for 6GB VRAM
+                "model_id": "runwayml/stable-diffusion-v1-5",
                 "positive_prompt": "cartoon style, clean lines, bright colors, comic book art, illustration, animated style",
                 "negative_prompt": "realistic, photograph, photorealistic, blurry, low quality, distorted, nsfw, dark, scary",
                 "steps": 20,
                 "guidance_scale": 7.0,
-                "width": 512,  # Reduced from 768 for GTX 1060
+                "width": 512,
                 "height": 512
             },
             "anime": {
@@ -74,7 +98,7 @@ class LocalSDService:
             }
         }
         
-        # Initialize with GTX 1060 optimized model
+        # Initialize with optimized model
         self.load_model("runwayml/stable-diffusion-v1-5")
     
     def optimize_prompt_for_clip(self, prompt, max_tokens=75):
@@ -161,7 +185,7 @@ class LocalSDService:
                 self.pipeline = self.models_cache[model_id]
                 logger.info(f"Loaded model from cache: {model_id}")
             else:
-                # Load model optimized for GTX 1060
+                # Load model with GPU optimizations
                 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
                 self.pipeline = StableDiffusionPipeline.from_pretrained(
                     model_id,
@@ -170,26 +194,27 @@ class LocalSDService:
                     requires_safety_checker=False
                 )
                 
-                # Optimize for speed and memory (GTX 1060 specific)
+                # Optimize for speed and memory
                 self.pipeline.scheduler = DPMSolverMultistepScheduler.from_config(
                     self.pipeline.scheduler.config
                 )
                 
                 if self.device == "cuda":
-                    # GTX 1060 optimizations
-                    logger.info("Applying GTX 1060 optimizations...")
-                    self.pipeline.enable_model_cpu_offload()  # Critical for 6GB VRAM
+                    # GPU optimizations for better memory management
+                    logger.info("Applying GPU optimizations...")
+                    self.pipeline.enable_model_cpu_offload()  # Efficient VRAM usage
                     self.pipeline.enable_attention_slicing()  # Reduces VRAM usage
                     
-                    # Skip xformers for GTX 1060 compatibility
-                    logger.info("Skipping xformers for GTX 1060 compatibility")
+                    # Skip xformers for compatibility across different GPUs
+                    logger.info("Skipping xformers for broader GPU compatibility")
                 else:
-                    logger.info("Running on CPU - xformers disabled for compatibility")
+                    logger.info("Running on CPU - optimizations disabled")
                 
                 self.pipeline = self.pipeline.to(self.device)
                 
-                # Cache only 1 model for GTX 1060 memory constraints
-                if len(self.models_cache) < 1:
+                # Cache models based on available memory
+                max_cached_models = 2 if self.device == "cuda" else 1
+                if len(self.models_cache) < max_cached_models:
                     self.models_cache[model_id] = self.pipeline
             
             self.current_model = model_id
@@ -220,10 +245,10 @@ class LocalSDService:
             else:
                 generator = None
             
-            logger.info(f"Generating image with style: {style} (GTX 1060 optimized)")
+            logger.info(f"Generating image with style: {style} (GPU optimized)")
             logger.info(f"Original prompt length: {len(full_prompt.split())} words")
             logger.info(f"Optimized prompt: {optimized_prompt[:100]}...")
-            logger.info("⏳ GTX 1060: This should take 10-30 seconds...")
+            logger.info("⏳ This should take 10-30 seconds on modern GPUs...")
             
             # Generate image
             with torch.inference_mode():
@@ -288,7 +313,7 @@ class LocalSDService:
                     except:
                         pass
                 
-                # Enable CPU offload for GTX 1060
+                # Enable CPU offload for better memory management
                 if self.device == "cuda":
                     self.img2img_pipeline.enable_sequential_cpu_offload()
                 
@@ -316,7 +341,7 @@ class LocalSDService:
             logger.info(f"Original scene prompt length: {len(scene_prompt.split())} words")
             logger.info(f"Optimized scene prompt: {optimized_scene_prompt[:100]}...")
             logger.info(f"Strength: {strength} (higher = more scene variation)")
-            logger.info("⏳ GTX 1060: This should take 15-40 seconds...")
+            logger.info("⏳ This should take 15-40 seconds on modern GPUs...")
             
             # Generate scene image based on character
             with torch.inference_mode():

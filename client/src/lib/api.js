@@ -309,6 +309,11 @@ export const storyAPI = {
     }
   },
 
+  getStory: async (storyId) => {
+    const response = await api.get(`/stories/${storyId}`)
+    return response.data
+  },
+
   deleteStory: async (storyId) => {
     const response = await api.delete(`/stories/${storyId}`)
     return response.data

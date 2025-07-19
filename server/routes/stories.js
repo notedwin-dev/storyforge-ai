@@ -199,20 +199,81 @@ router.get('/my-stories', requireAuth, async (req, res) => {
     const generations = await getUserGenerations(req.user.id, parseInt(limit), parseInt(offset));
     
     if (generations && generations.length > 0) {
-      const stories = generations.map(gen => ({
-        id: gen.id,
-        title: gen.result_data?.title || gen.prompt || 'Untitled Story',
-        description: gen.result_data?.description || 'AI Generated Story',
-        content: gen.result_data?.story?.content || gen.result_data?.story?.fullStory,
-        visibility: gen.result_data?.visibility || 'private',
-        createdAt: gen.created_at,
-        genre: gen.genre,
-        style: gen.style,
-        status: gen.status,
-        videoUrl: gen.result_data?.video_url,
-        storyboardUrls: gen.result_data?.storyboard_urls || [],
-        metadata: gen.result_data?.metadata || {}
-      }));
+      const stories = generations.map(gen => {
+        // Parse result_data if it's a string
+        let resultData = gen.result_data;
+        if (typeof resultData === 'string') {
+          try {
+            resultData = JSON.parse(resultData);
+          } catch (e) {
+            console.warn('Failed to parse result_data for generation:', gen.id);
+            resultData = {};
+          }
+        }
+
+        // Extract story content from various possible locations
+        const story = resultData?.story || {};
+        const content = story.fullStory || story.content || story.story || gen.prompt || '';
+
+        // Extract characters - handle various formats
+        let characters = [];
+        if (gen.character) {
+          characters = [{
+            name: gen.character.name || "Character",
+            description: gen.character.description || "",
+            traits: gen.character.traits || [],
+            imageUrl: gen.character.thumbnail_url || gen.character.avatar_url || null
+          }];
+        } else if (story.characters && Array.isArray(story.characters)) {
+          characters = story.characters;
+        } else if (story.character) {
+          characters = [{
+            name: story.character.name || story.character,
+            description: story.character.description || "",
+            traits: story.character.traits || [],
+            imageUrl: story.character.imageUrl || story.character.thumbnailUrl || null
+          }];
+        }
+
+        // Handle storyboard URLs - convert objects to strings if needed
+        let storyboardUrls = resultData?.storyboard_urls || [];
+        if (Array.isArray(storyboardUrls)) {
+          storyboardUrls = storyboardUrls.map(item => {
+            if (typeof item === 'object' && item.imageUrl) {
+              return item.imageUrl;
+            }
+            return item;
+          });
+        }
+
+        return {
+          id: gen.id,
+          title: story.title || resultData?.title || gen.prompt || 'Untitled Story',
+          description: story.description || resultData?.description || 'AI Generated Story',
+          content: content,
+          fullStory: story.fullStory || content,
+          scenes: story.scenes || [],
+          characters: characters,
+          visibility: resultData?.visibility || 'private',
+          createdAt: gen.created_at,
+          type: gen.genre || story.type || 'adventure',
+          genre: gen.genre,
+          style: gen.style,
+          status: gen.status,
+          estimatedDuration: story.estimatedDuration ||
+            (story.scenes ? `${story.scenes.length * 2}-${story.scenes.length * 3} min` : '5-10 min'),
+          videoUrl: resultData?.video_url,
+          storyboardUrls: storyboardUrls,
+          sceneUrls: resultData?.scene_urls || storyboardUrls,
+          audio_narration: resultData?.audio_narration || null,
+          metadata: {
+            ...resultData?.metadata,
+            generatedBy: "Gemini AI",
+            wordCount: content ? content.split(" ").length : 0,
+            sceneCount: story.scenes ? story.scenes.length : 0,
+          }
+        };
+      });
 
       return res.json({
         success: true,
@@ -235,18 +296,59 @@ router.get('/my-stories', requireAuth, async (req, res) => {
             const story = JSON.parse(storyData);
             
             if (story.userId === req.user.id) {
+              // Extract story content from various possible locations
+              const storyContent = story.result?.story || {};
+              const content = storyContent.fullStory || storyContent.content || storyContent.story || story.prompt || '';
+
+              // Extract characters - handle various formats
+              let characters = [];
+              if (storyContent.characters && Array.isArray(storyContent.characters)) {
+                characters = storyContent.characters;
+              } else if (storyContent.character) {
+                characters = [{
+                  name: storyContent.character.name || storyContent.character,
+                  description: storyContent.character.description || "",
+                  traits: storyContent.character.traits || [],
+                  imageUrl: storyContent.character.imageUrl || storyContent.character.thumbnailUrl || null
+                }];
+              }
+
+              // Handle storyboard URLs - convert objects to strings if needed
+              let storyboardUrls = story.result?.storyboard_urls || [];
+              if (Array.isArray(storyboardUrls)) {
+                storyboardUrls = storyboardUrls.map(item => {
+                  if (typeof item === 'object' && item.imageUrl) {
+                    return item.imageUrl;
+                  }
+                  return item;
+                });
+              }
+
               userStories.push({
                 id: story.id,
-                title: story.result?.title || story.prompt || 'Untitled Story',
-                description: story.result?.description || 'AI Generated Story',
-                content: story.result?.story?.content || story.result?.story?.fullStory,
+                title: storyContent.title || story.result?.title || story.prompt || 'Untitled Story',
+                description: storyContent.description || story.result?.description || 'AI Generated Story',
+                content: content,
+                fullStory: storyContent.fullStory || content,
+                scenes: storyContent.scenes || [],
+                characters: characters,
                 visibility: story.result?.visibility || 'private',
                 createdAt: story.savedAt,
+                type: story.genre || storyContent.type || 'adventure',
                 genre: story.genre,
                 style: story.style,
+                estimatedDuration: storyContent.estimatedDuration ||
+                  (storyContent.scenes ? `${storyContent.scenes.length * 2}-${storyContent.scenes.length * 3} min` : '5-10 min'),
                 videoUrl: story.result?.video_url,
-                storyboardUrls: story.result?.storyboard_urls || [],
-                metadata: story.result?.metadata || {}
+                storyboardUrls: storyboardUrls,
+                sceneUrls: story.result?.scene_urls || storyboardUrls,
+                audio_narration: story.result?.audio_narration || null,
+                metadata: {
+                  ...story.result?.metadata,
+                  generatedBy: "Gemini AI",
+                  wordCount: content ? content.split(" ").length : 0,
+                  sceneCount: storyContent.scenes ? storyContent.scenes.length : 0,
+                }
               });
             }
           } catch (parseError) {
@@ -400,23 +502,59 @@ router.get('/:id', async (req, res) => {
       const resultData = await fs.readFile(resultPath, 'utf8');
       const result = JSON.parse(resultData);
 
+      // Extract story content from various possible locations
+      const story = result.story || {};
+      const content = story.fullStory || story.content || story.story || '';
+
+      // Extract characters - handle various formats
+      let characters = [];
+      if (story.characters && Array.isArray(story.characters)) {
+        characters = story.characters;
+      } else if (story.character) {
+        characters = [{
+          name: story.character.name || story.character,
+          description: story.character.description || "",
+          traits: story.character.traits || [],
+          imageUrl: story.character.imageUrl || story.character.thumbnailUrl || null
+        }];
+      }
+
+      // Handle storyboard URLs - convert objects to strings if needed
+      let storyboardUrls = result.storyboard_urls || [];
+      if (Array.isArray(storyboardUrls)) {
+        storyboardUrls = storyboardUrls.map(item => {
+          if (typeof item === 'object' && item.imageUrl) {
+            return item.imageUrl;
+          }
+          return item;
+        });
+      }
+
       return res.json({
         success: true,
         story: {
           id: id,
-          title: result.story?.title || 'Untitled Story',
-          content: result.story?.content || result.story?.story || '',
-          type: result.story?.type || 'adventure',
-          estimatedDuration: result.metadata?.estimated_duration || '10-15 min',
-          characters: result.story?.characters || [],
-          scenes: result.story?.scenes || [],
-          sceneUrls: result.story?.sceneUrls || [],
-          storyboardUrls: result.storyboard_urls || [],
+          title: story.title || result.title || 'Untitled Story',
+          content: content,
+          fullStory: story.fullStory || content,
+          scenes: story.scenes || [],
+          characters: characters,
+          type: story.type || result.genre || 'adventure',
+          estimatedDuration: story.estimatedDuration ||
+            result.metadata?.estimated_duration ||
+            (story.scenes ? `${story.scenes.length * 2}-${story.scenes.length * 3} min` : '5-10 min'),
+          sceneUrls: result.scene_urls || storyboardUrls,
+          storyboardUrls: storyboardUrls,
           videoUrl: result.video_url,
           audioUrl: result.audio_narration?.audioUrl,
           audio_narration: result.audio_narration,
           createdAt: result.metadata?.generated_at || new Date().toISOString(),
-          metadata: result.metadata
+          metadata: {
+            ...result.metadata,
+            generatedBy: "Gemini AI",
+            wordCount: content ? content.split(" ").length : 0,
+            sceneCount: story.scenes ? story.scenes.length : 0,
+          }
         }
       });
     } catch (fileError) {
