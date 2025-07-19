@@ -66,7 +66,7 @@ const StoryPrompt = ({ characters, onGenerate, isGenerating }) => {
     length: "medium",
     includeVoice: true,
     includeVideo: true,
-    voiceId: "demo_voice_1",
+    voiceId: "9BWtsMINqrJLrRacOk9x", // Default to Aria voice
     voiceEmotion: "neutral",
   });
 
@@ -79,15 +79,41 @@ const StoryPrompt = ({ characters, onGenerate, isGenerating }) => {
       try {
         setIsLoadingVoices(true);
         const response = await voiceAPI.getVoices();
-        setVoices(response.voices || []);
+        const fetchedVoices = response.voices || [];
+        setVoices(fetchedVoices);
+
+        // Set the first available voice as default if no voice is selected yet
+        if (
+          fetchedVoices.length > 0 &&
+          formData.voiceId === "9BWtsMINqrJLrRacOk9x"
+        ) {
+          updateField("voiceId", fetchedVoices[0].voice_id);
+        }
       } catch (error) {
-        console.error('Failed to fetch voices:', error);
+        console.error("Failed to fetch voices:", error);
         // Use demo voices as fallback
-        setVoices([
-          { voice_id: 'demo_voice_1', name: 'Emma', description: 'Warm female voice', gender: 'female' },
-          { voice_id: 'demo_voice_2', name: 'James', description: 'Clear male voice', gender: 'male' },
-          { voice_id: 'demo_voice_3', name: 'Sophie', description: 'Gentle storytelling voice', gender: 'female' }
-        ]);
+        const fallbackVoices = [
+          {
+            voice_id: "demo_voice_1",
+            name: "Emma",
+            description: "Warm female voice",
+            gender: "female",
+          },
+          {
+            voice_id: "demo_voice_2",
+            name: "James",
+            description: "Clear male voice",
+            gender: "male",
+          },
+          {
+            voice_id: "demo_voice_3",
+            name: "Sophie",
+            description: "Gentle storytelling voice",
+            gender: "female",
+          },
+        ];
+        setVoices(fallbackVoices);
+        updateField("voiceId", fallbackVoices[0].voice_id);
       } finally {
         setIsLoadingVoices(false);
       }

@@ -16,31 +16,40 @@ import {
 } from 'lucide-react';
 
 const SharePage = () => {
-  const { storyId } = useParams();
+  const { shareId } = useParams();
   const navigate = useNavigate();
   const [story, setStory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
-    if (storyId) {
+    if (shareId) {
       fetchStory();
     }
-  }, [storyId]);
+  }, [shareId]);
 
   const fetchStory = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/stories/${storyId}`);
+      console.log("Fetching story with ID:", shareId);
+      const response = await fetch(`/api/stories/${shareId}`);
+      console.log("Response status:", response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log("Story data:", data);
         setStory(data.story);
       } else {
-        navigate('/library');
+        console.error(
+          "Failed to fetch story:",
+          response.status,
+          response.statusText
+        );
+        navigate("/library");
       }
     } catch (error) {
-      console.error('Error fetching story:', error);
-      navigate('/library');
+      console.error("Error fetching story:", error);
+      navigate("/library");
     } finally {
       setLoading(false);
     }

@@ -36,12 +36,14 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
   }
 
   const tabs = [
-    { id: 'story', label: 'Story Text', icon: BookOpen },
-    { id: 'audio', label: 'Audio Narration', icon: Volume2 },
-    { id: 'characters', label: 'Characters', icon: User },
-    { id: 'scenes', label: 'Scene Images', icon: Image },
-    { id: 'storyboard', label: 'Storyboard', icon: Film },
-    { id: 'metadata', label: 'Details', icon: Eye }
+    { id: "story", label: "Story Text", icon: BookOpen },
+    ...(story.audio_narration
+      ? [{ id: "audio", label: "Audio Narration", icon: Volume2 }]
+      : []),
+    { id: "characters", label: "Characters", icon: User },
+    { id: "scenes", label: "Scene Images", icon: Image },
+    { id: "storyboard", label: "Storyboard", icon: Film },
+    { id: "metadata", label: "Details", icon: Eye },
   ];
 
   const previewText = story.content?.slice(0, 300) || '';

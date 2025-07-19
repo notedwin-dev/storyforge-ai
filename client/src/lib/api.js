@@ -1,16 +1,21 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.DEV ? 'http://localhost:3001/api' : '/api'
+)
 
 // Helper to get the server base URL for static files
 export const getServerBaseURL = () => {
+  if (import.meta.env.VITE_SERVER_URL) {
+    return import.meta.env.VITE_SERVER_URL
+  }
   if (import.meta.env.VITE_API_URL) {
     // If VITE_API_URL is set, extract the base URL (remove /api)
     return import.meta.env.VITE_API_URL.replace('/api', '')
   }
   // Default to current origin for relative URLs
-  return window.location.origin
+  return import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin
 }
 
 // Helper function to construct full image URLs
@@ -275,8 +280,24 @@ export const storyAPI = {
   },
 
   getMyStories: async (limit = 20, offset = 0) => {
-    const response = await api.get(`/stories/my-stories?limit=${limit}&offset=${offset}`)
-    return response.data
+    try {
+    // Try authenticated endpoint first
+      const response = await api.get(`/stories/my-stories?limit=${limit}&offset=${offset}`)
+      return response.data
+    } catch (error) {
+      // If authentication fails (401/403), try local endpoint for development
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.log('Authentication failed, trying local stories endpoint for development')
+        try {
+          const response = await api.get(`/stories/local?limit=${limit}&offset=${offset}`)
+          return response.data
+        } catch (localError) {
+          console.error('Local stories fetch also failed:', localError)
+          throw error // Throw original auth error
+        }
+      }
+      throw error
+    }
   },
 
   deleteStory: async (storyId) => {
@@ -354,8 +375,9 @@ export class StorySocket {
   
   connect() {
     // Connect to backend WebSocket server, not the frontend dev server
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
-    const wsUrl = API_BASE_URL.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws'
+    const serverUrl = import.meta.env.VITE_SERVER_URL ||
+      (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin)
+    const wsUrl = serverUrl.replace('http://', 'ws://').replace('https://', 'wss://') + '/ws'
     
     console.log('Connecting to WebSocket:', wsUrl) // Debug log
     
