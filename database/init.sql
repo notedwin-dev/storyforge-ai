@@ -130,15 +130,42 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.characters ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.generations ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if they exist and recreate them
-DROP POLICY IF EXISTS "Users can manage own profile" ON public.users;
-DROP POLICY IF EXISTS "Users can manage own characters" ON public.characters;
-DROP POLICY IF EXISTS "Users can manage own generations" ON public.generations;
+-- Create comprehensive RLS policies
+-- Users table policies
+CREATE POLICY "Users can view own profile" ON public.users
+  FOR SELECT USING (auth.uid() = id);
 
--- Create RLS policies
-CREATE POLICY "Users can manage own profile" ON public.users FOR ALL USING (auth.uid() = id);
-CREATE POLICY "Users can manage own characters" ON public.characters FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage own generations" ON public.generations FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Users can update own profile" ON public.users
+  FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile" ON public.users
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Characters table policies
+CREATE POLICY "Users can view own characters" ON public.characters
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own characters" ON public.characters
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own characters" ON public.characters
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own characters" ON public.characters
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Generations table policies
+CREATE POLICY "Users can view own generations" ON public.generations
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own generations" ON public.generations
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own generations" ON public.generations
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own generations" ON public.generations
+  FOR DELETE USING (auth.uid() = user_id);
 
 -- Auto-create user profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -162,52 +189,6 @@ GRANT ALL ON public.users TO anon, authenticated;
 GRANT ALL ON public.characters TO anon, authenticated;
 GRANT ALL ON public.generations TO anon, authenticated;
 
--- Success message
-DO $$
-BEGIN
-  RAISE NOTICE 'StoryForge AI database initialization completed successfully!';
-  RAISE NOTICE 'Tables created: users, characters, generations';
-  RAISE NOTICE 'RLS policies enabled and configured';
-  RAISE NOTICE 'Auto user profile creation trigger installed';
-  RAISE NOTICE 'Performance indexes created';
-END $$;
-
--- Create RLS policies for users table
-CREATE POLICY "Users can view own profile" ON public.users
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON public.users
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Users can insert own profile" ON public.users
-  FOR INSERT WITH CHECK (auth.uid() = id);
-
--- Create RLS policies for characters table
-CREATE POLICY "Users can view own characters" ON public.characters
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own characters" ON public.characters
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own characters" ON public.characters
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own characters" ON public.characters
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Create RLS policies for generations table
-CREATE POLICY "Users can view own generations" ON public.generations
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own generations" ON public.generations
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own generations" ON public.generations
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can delete own generations" ON public.generations
-  FOR DELETE USING (auth.uid() = user_id);
-
 -- Create function to automatically update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -227,23 +208,13 @@ CREATE TRIGGER update_characters_updated_at BEFORE UPDATE ON public.characters
 CREATE TRIGGER update_generations_updated_at BEFORE UPDATE ON public.generations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Create function to automatically create user profile on signup
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+-- Success message
+DO $$
 BEGIN
-  INSERT INTO public.users (id, name, avatar_url)
-  VALUES (NEW.id, NEW.raw_user_meta_data->>'name', NEW.raw_user_meta_data->>'avatar_url');
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger to automatically create user profile
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- Grant necessary permissions
-GRANT USAGE ON SCHEMA public TO anon, authenticated;
-GRANT ALL ON public.users TO authenticated;
-GRANT ALL ON public.characters TO authenticated;
-GRANT ALL ON public.generations TO authenticated;
+  RAISE NOTICE 'StoryForge AI database initialization completed successfully!';
+  RAISE NOTICE 'Tables created: users, characters, generations';
+  RAISE NOTICE 'RLS policies enabled and configured';
+  RAISE NOTICE 'Auto user profile creation trigger installed';
+  RAISE NOTICE 'Performance indexes created';
+  RAISE NOTICE 'Updated_at triggers created';
+END $$;
