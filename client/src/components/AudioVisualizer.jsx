@@ -20,6 +20,7 @@ const AudioVisualizer = ({
   const [volume, setVolume] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [hasAudioContextError, setHasAudioContextError] = useState(false);
+  const [currentAudioIndex, setCurrentAudioIndex] = useState(0);
 
   // Calculate scene timing
   const sceneTimings = React.useMemo(() => {
@@ -27,11 +28,13 @@ const AudioVisualizer = ({
 
     let accumTime = 0;
     return audioNarration.scenes.map((scene, index) => {
+      const duration = scene.duration || 0; // Default to 0 if undefined
       const startTime = accumTime;
-      const endTime = accumTime + scene.duration;
+      const endTime = accumTime + duration;
       accumTime = endTime;
       return {
         ...scene,
+        duration,
         startTime,
         endTime,
         index,
@@ -213,6 +216,34 @@ const AudioVisualizer = ({
     const prevScene = Math.max(currentScene - 1, 0);
     jumpToScene(prevScene);
   };
+
+  // Handle next/previous audio
+  const handleNextAudio = () => {
+    if (
+      audioNarration?.files &&
+      currentAudioIndex < audioNarration.files.length - 1
+    ) {
+      setCurrentAudioIndex((prevIndex) => prevIndex + 1);
+    }
+  };
+
+  const handlePreviousAudio = () => {
+    if (audioNarration?.files && currentAudioIndex > 0) {
+      setCurrentAudioIndex((prevIndex) => prevIndex - 1);
+    }
+  };
+
+  // Update audio source when currentAudioIndex changes
+  useEffect(() => {
+    if (audioNarration?.files && audioNarration.files.length > 0) {
+      const currentAudio = audioNarration.files[currentAudioIndex];
+      if (audioRef.current) {
+        audioRef.current.src = currentAudio.url;
+        audioRef.current.load();
+        setIsPlaying(false); // Reset playback state
+      }
+    }
+  }, [currentAudioIndex, audioNarration]);
 
   // Format time
   const formatTime = (seconds) => {
