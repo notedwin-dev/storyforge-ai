@@ -1,0 +1,46 @@
+{
+  "name": "storyforge-ai",
+  "version": "1.0.0",
+  "description": "🏆 Hackathon Ready: AI-powered storytelling platform with Character DNA Technology, multi-AI orchestration, and comprehensive export capabilities",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "client:dev": "cd client && npm run dev",
+    "server:dev": "cd server && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "demo": "echo \"🚀 Demo Ready! Run 'npm run dev' then visit http://localhost:3000\""
+  },
+  "keywords": [
+    "hackathon",
+    "ai-orchestration",
+    "character-dna",
+    "storytelling",
+    "multi-ai",
+    "clip-embeddings",
+    "real-time",
+    "websockets",
+    "gemini",
+    "stable-diffusion",
+    "elevenlabs",
+    "video-generation",
+    "pdf-export",
+    "character-consistency"
+  ],
+  "author": "StoryForge AI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@huggingface/inference": "^4.5.3",
+    "axios": "^1.10.0",
+    "sharp": "^0.34.3"
+  }
+}

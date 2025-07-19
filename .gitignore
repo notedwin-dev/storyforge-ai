@@ -1,0 +1,12 @@
+# Exclude environment files
+.env
+.env.local
+
+# Exclude node modules from root and subdirectories
+/node_modules
+/client/node_modules
+/server/node_modules
+/server/storage/*
+
+# Exclude python virtual environments
+/python-sd-service/venv
