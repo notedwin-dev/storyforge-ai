@@ -405,7 +405,3 @@ CLOUDFLARE_R2_ENDPOINT=your_r2_endpoint
 - **Day 3**: Video pipeline with Wan-AI
 - **Day 4**: Voice narration + polish
 - **Day 5**: Demo preparation
-
-## 📝 License
-
-MIT License - see LICENSE file for details.
