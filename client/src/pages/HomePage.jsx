@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { 
-  Sparkles, 
-  Play, 
-  Upload, 
-  Wand2, 
+import {
+  Sparkles,
+  Play,
+  Upload,
+  Wand2,
   Download,
   ArrowRight,
   Star,
@@ -14,8 +14,9 @@ import {
   Palette,
   Film,
   Share,
-  CheckCircle
-} from 'lucide-react'
+  CheckCircle,
+  X,
+} from "lucide-react";
 
 export default function HomePage() {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)

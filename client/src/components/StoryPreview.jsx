@@ -12,8 +12,10 @@ import {
   User,
   Play,
   Image,
-  Film
+  Film,
+  Volume2
 } from 'lucide-react';
+import AudioVisualizer from './AudioVisualizer';
 
 const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -35,6 +37,7 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
 
   const tabs = [
     { id: 'story', label: 'Story Text', icon: BookOpen },
+    { id: 'audio', label: 'Audio Narration', icon: Volume2 },
     { id: 'characters', label: 'Characters', icon: User },
     { id: 'scenes', label: 'Scene Images', icon: Image },
     { id: 'storyboard', label: 'Storyboard', icon: Film },
@@ -192,6 +195,25 @@ const StoryPreview = ({ story, onEdit, onShare, onDownload, onPlayVideo }) => {
                     )}
                   </motion.button>
                 )}
+              </motion.div>
+            )}
+
+            {activeTab === 'audio' && (
+              <motion.div
+                key="audio"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-4"
+              >
+                <AudioVisualizer
+                  audioNarration={story.audio_narration}
+                  storyTitle={story.title || 'Your Story'}
+                  onSceneChange={(sceneIndex) => {
+                    // Optional: Could sync with storyboard view
+                    console.log('Audio scene changed to:', sceneIndex);
+                  }}
+                />
               </motion.div>
             )}
 

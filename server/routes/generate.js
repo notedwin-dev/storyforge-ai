@@ -10,6 +10,7 @@ const { validateGenerationRequest } = require('../middleware/validation');
 const { broadcastProgress } = require('../services/websocket');
 const { GeminiStoryGenerator } = require('../services/geminiAI');
 const { FreeHybridStableDiffusionService } = require('../services/freeHybridStableDiffusion');
+const { generateStoryNarration } = require('../services/voiceService');
 
 const router = express.Router();
 
@@ -158,6 +159,7 @@ router.post('/', validateGenerationRequest, async (req, res) => {
         { name: 'character_loading', status: 'pending', message: 'Loading character DNA...', estimatedTime: 5 },
         { name: 'story_generation', status: 'pending', message: 'Generating story with Gemini AI...', estimatedTime: 15 },
         { name: 'storyboard_generation', status: 'pending', message: 'Creating storyboard with character...', estimatedTime: 45 },
+        ...(options?.includeVoice ? [{ name: 'voice_generation', status: 'pending', message: 'Generating voice narration...', estimatedTime: 30 }] : []),
         ...(options?.includeVideo !== false ? [{ name: 'video_generation', status: 'pending', message: 'Synthesizing video...', estimatedTime: 90 }] : []),
         { name: 'finalization', status: 'pending', message: 'Finalizing output...', estimatedTime: 10 }
       ]
@@ -529,11 +531,44 @@ async function generateStoryAsync(jobId) {
     }
     await updateJobProgress(jobId, 'storyboard_generation', 'completed', 65);
 
-    // Step 4: Generate video (optional)
+    // Step 4: Generate voice narration (optional)
+    let audioResult = null;
+    if (job.options?.includeVoice) {
+      console.log(`🎙️ Starting voice narration generation for job ${jobId}...`);
+      await updateJobProgress(jobId, 'voice_generation', 'processing', 75);
+      
+      try {
+        // Use default voice if not specified
+        const voiceId = job.options?.voiceId || 'demo_voice_1';
+        const voiceEmotion = job.options?.voiceEmotion || 'neutral';
+        
+        console.log(`🎙️ Generating voice narration with voice: ${voiceId}, emotion: ${voiceEmotion}`);
+        audioResult = await generateStoryNarration(story.story || story, voiceId, {
+          emotion: voiceEmotion,
+          language: job.options?.language || 'en',
+          model_id: job.options?.voiceModel || 'eleven_monolingual_v1'
+        });
+        
+        console.log(`✅ Voice narration generated for job ${jobId}:`, {
+          total_duration: audioResult.total_duration,
+          scenes_count: audioResult.scenes.length
+        });
+      } catch (voiceError) {
+        console.warn('⚠️ Voice generation failed:', voiceError.message);
+        // Continue without voice narration
+        audioResult = null;
+      }
+      
+      await updateJobProgress(jobId, 'voice_generation', 'completed', 80);
+    } else {
+      console.log(`⏭️ Skipping voice generation for job ${jobId} (disabled in options)`);
+    }
+
+    // Step 5: Generate video (optional)
     let videoResult = null;
     if (job.options?.includeVideo !== false) {
       console.log(`🎬 Starting video generation for job ${jobId}...`);
-      await updateJobProgress(jobId, 'video_generation', 'processing', 90);
+      await updateJobProgress(jobId, 'video_generation', 'processing', 85);
       
       // Merge job properties with options for video generation
       const videoOptions = {
@@ -557,14 +592,18 @@ async function generateStoryAsync(jobId) {
     const result = {
       story: story.story || story,
       video_url: videoResult?.videoUrl || null,
+      audio_narration: audioResult || null,
       storyboard_urls: storyboardImages || [],
       duration: videoResult?.duration || 0,
+      audio_duration: audioResult?.total_duration || 0,
       metadata: {
         character_name: characterDNA.name,
         style: job.style,
         genre: job.genre,
         scenes_count: (story.story?.scenes || story.scenes).length,
         storyboards_count: storyboardImages.length,
+        voice_enabled: job.options?.includeVoice || false,
+        audio_scenes_count: audioResult?.scenes?.length || 0,
         ai_generated: true,
         generation_method: generationMethod,
         gemini_used: generationMethod.includes('gemini'),

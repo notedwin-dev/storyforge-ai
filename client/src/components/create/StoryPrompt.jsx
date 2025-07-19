@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, BookOpen, Users, Zap } from "lucide-react";
+import { Sparkles, BookOpen, Users, Zap, Volume2, ChevronDown } from "lucide-react";
+import { voiceAPI } from "../../lib/api";
 
 const STORY_TYPES = [
   {
@@ -48,6 +49,15 @@ const LENGTHS = [
   { id: "long", label: "Long (20+ min)", duration: "20+ minutes" },
 ];
 
+const VOICE_EMOTIONS = [
+  { id: "neutral", label: "Neutral" },
+  { id: "happy", label: "Happy" },
+  { id: "excited", label: "Excited" },
+  { id: "calm", label: "Calm" },
+  { id: "dramatic", label: "Dramatic" },
+  { id: "sad", label: "Sad" },
+];
+
 const StoryPrompt = ({ characters, onGenerate, isGenerating }) => {
   const [formData, setFormData] = useState({
     prompt: "",
@@ -56,7 +66,35 @@ const StoryPrompt = ({ characters, onGenerate, isGenerating }) => {
     length: "medium",
     includeVoice: true,
     includeVideo: true,
+    voiceId: "demo_voice_1",
+    voiceEmotion: "neutral",
   });
+
+  const [voices, setVoices] = useState([]);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+
+  // Fetch available voices when component mounts
+  useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        setIsLoadingVoices(true);
+        const response = await voiceAPI.getVoices();
+        setVoices(response.voices || []);
+      } catch (error) {
+        console.error('Failed to fetch voices:', error);
+        // Use demo voices as fallback
+        setVoices([
+          { voice_id: 'demo_voice_1', name: 'Emma', description: 'Warm female voice', gender: 'female' },
+          { voice_id: 'demo_voice_2', name: 'James', description: 'Clear male voice', gender: 'male' },
+          { voice_id: 'demo_voice_3', name: 'Sophie', description: 'Gentle storytelling voice', gender: 'female' }
+        ]);
+      } finally {
+        setIsLoadingVoices(false);
+      }
+    };
+
+    fetchVoices();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -222,18 +260,75 @@ const StoryPrompt = ({ characters, onGenerate, isGenerating }) => {
         {/* Options */}
         <div className="card p-6">
           <h3 className="font-semibold text-gray-100 mb-4">Output Options</h3>
-          <div className="space-y-3">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={formData.includeVoice}
-                onChange={(e) => updateField("includeVoice", e.target.checked)}
-                className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-              />
-              <span className="ml-3 text-gray-100">
-                Include voice narration
-              </span>
-            </label>
+          <div className="space-y-4">
+            {/* Voice Narration */}
+            <div className="space-y-3">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.includeVoice}
+                  onChange={(e) => updateField("includeVoice", e.target.checked)}
+                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                />
+                <span className="ml-3 text-gray-100 flex items-center">
+                  <Volume2 className="w-4 h-4 mr-2" />
+                  Include voice narration
+                </span>
+              </label>
+              
+              {/* Voice Options - Show when voice is enabled */}
+              {formData.includeVoice && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="ml-7 space-y-3 border-l border-gray-600 pl-4"
+                >
+                  {/* Voice Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Voice Character
+                    </label>
+                    <select
+                      value={formData.voiceId}
+                      onChange={(e) => updateField("voiceId", e.target.value)}
+                      disabled={isLoadingVoices}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:ring-2 focus:ring-primary-500"
+                    >
+                      {isLoadingVoices ? (
+                        <option>Loading voices...</option>
+                      ) : (
+                        voices.map((voice) => (
+                          <option key={voice.voice_id} value={voice.voice_id}>
+                            {voice.name} - {voice.description}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Voice Emotion */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Emotion & Tone
+                    </label>
+                    <select
+                      value={formData.voiceEmotion}
+                      onChange={(e) => updateField("voiceEmotion", e.target.value)}
+                      className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-gray-100 focus:ring-2 focus:ring-primary-500"
+                    >
+                      {VOICE_EMOTIONS.map((emotion) => (
+                        <option key={emotion.id} value={emotion.id}>
+                          {emotion.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Video Generation */}
             <label className="flex items-center">
               <input
                 type="checkbox"
