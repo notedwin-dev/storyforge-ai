@@ -121,6 +121,75 @@ router.post('/save', requireAuth, async (req, res) => {
   }
 });
 
+// Get local stories (for development - no auth required)
+router.get('/local', async (req, res) => {
+  try {
+    const { limit = 20, offset = 0 } = req.query;
+
+    // Read from local storage results directory
+    const resultsDir = path.join(__dirname, '../storage/results');
+
+    try {
+      const files = await fs.readdir(resultsDir);
+      const stories = [];
+
+      for (const file of files.slice(offset, offset + limit)) {
+        if (file.endsWith('.json')) {
+          try {
+            const filePath = path.join(resultsDir, file);
+            const data = await fs.readFile(filePath, 'utf8');
+            const result = JSON.parse(data);
+
+            stories.push({
+              id: file.replace('.json', ''),
+              title: result.story?.title || 'Untitled Story',
+              content: result.story?.content || result.story?.story || '',
+              type: result.story?.type || 'adventure',
+              estimatedDuration: result.metadata?.estimated_duration || '10-15 min',
+              characters: result.story?.characters || [],
+              scenes: result.story?.scenes || [],
+              sceneUrls: result.story?.sceneUrls || [],
+              storyboardUrls: result.storyboard_urls || [],
+              videoUrl: result.video_url,
+              audio_narration: result.audio_narration,
+              createdAt: result.metadata?.generated_at || new Date().toISOString(),
+              metadata: result.metadata
+            });
+          } catch (fileError) {
+            console.warn(`Failed to read story file ${file}:`, fileError.message);
+          }
+        }
+      }
+
+      // Sort by creation date (newest first)
+      stories.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+      return res.json({
+        success: true,
+        stories: stories,
+        count: stories.length,
+        total: files.filter(f => f.endsWith('.json')).length
+      });
+
+    } catch (dirError) {
+      console.warn('Results directory not found, returning empty stories list');
+      return res.json({
+        success: true,
+        stories: [],
+        count: 0,
+        total: 0
+      });
+    }
+
+  } catch (error) {
+    console.error('Error fetching local stories:', error);
+    res.status(500).json({
+      error: 'Failed to fetch stories',
+      message: error.message
+    });
+  }
+});
+
 // Get user's saved stories
 router.get('/my-stories', requireAuth, async (req, res) => {
   try {
@@ -314,6 +383,54 @@ router.post('/:storyId/generate-video', requireAuth, async (req, res) => {
     console.error('Video generation error:', error);
     res.status(500).json({
       error: 'Failed to start video generation',
+      message: error.message
+    });
+  }
+});
+
+// Get a single story by ID (for sharing) - MUST BE LAST to avoid conflicts
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First, try to load from results directory
+    const resultPath = path.join(__dirname, '../storage/results', `${id}.json`);
+
+    try {
+      const resultData = await fs.readFile(resultPath, 'utf8');
+      const result = JSON.parse(resultData);
+
+      return res.json({
+        success: true,
+        story: {
+          id: id,
+          title: result.story?.title || 'Untitled Story',
+          content: result.story?.content || result.story?.story || '',
+          type: result.story?.type || 'adventure',
+          estimatedDuration: result.metadata?.estimated_duration || '10-15 min',
+          characters: result.story?.characters || [],
+          scenes: result.story?.scenes || [],
+          sceneUrls: result.story?.sceneUrls || [],
+          storyboardUrls: result.storyboard_urls || [],
+          videoUrl: result.video_url,
+          audioUrl: result.audio_narration?.audioUrl,
+          audio_narration: result.audio_narration,
+          createdAt: result.metadata?.generated_at || new Date().toISOString(),
+          metadata: result.metadata
+        }
+      });
+    } catch (fileError) {
+      // If not found in results, return 404
+      return res.status(404).json({
+        error: 'Story not found',
+        message: 'The requested story could not be found'
+      });
+    }
+
+  } catch (error) {
+    console.error('Error fetching story:', error);
+    res.status(500).json({
+      error: 'Failed to fetch story',
       message: error.message
     });
   }

@@ -9,7 +9,7 @@ class GeminiStoryGenerator {
   async generateStory(prompt, genre, characterDNA, options = {}) {
     const maxRetries = 3;
     const retryDelay = 2000; // 2 seconds between retries
-    const requestTimeout = 15000; // 15 seconds timeout for each attempt (much faster)
+    const requestTimeout = 45000; // Increased to 45 seconds timeout for each attempt
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -18,7 +18,7 @@ class GeminiStoryGenerator {
         
         const storyPrompt = this.buildStoryPrompt(prompt, genre, characterDNA, options);
         
-        // Add timeout protection using Promise.race with shorter timeout
+        // Add timeout protection using Promise.race with longer timeout
         const generationPromise = this.model.generateContent(storyPrompt);
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => {
@@ -31,11 +31,16 @@ class GeminiStoryGenerator {
         const result = await Promise.race([generationPromise, timeoutPromise]);
         console.log(`✅ Gemini API call completed (attempt ${attempt})`);
         
+        console.log(`📝 Processing response from Gemini...`);
         const response = await result.response;
         const storyText = response.text();
+        console.log(`📝 Response received, length: ${storyText.length} characters`);
+        console.log(`📝 First 200 chars: ${storyText.substring(0, 200)}...`);
         
         // Parse the story into scenes
+        console.log(`🎭 Parsing story into scenes...`);
         const parsedStory = this.parseStoryIntoScenes(storyText, characterDNA);
+        console.log(`🎭 Parsing completed. Scenes found: ${parsedStory.scenes?.length || 0}`);
         
         console.log(`✅ Gemini story generation successful on attempt ${attempt}`);
         
@@ -92,7 +97,7 @@ class GeminiStoryGenerator {
 
   async checkAvailability() {
     try {
-      const timeoutDuration = 5000; // 5 seconds timeout for availability check
+      const timeoutDuration = 30000; // Increased to 30 seconds timeout for availability check
       
       console.log(`🔍 Checking Gemini availability with ${timeoutDuration/1000}s timeout...`);
       

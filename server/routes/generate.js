@@ -449,34 +449,21 @@ async function generateStoryAsync(jobId) {
     let generationMethod = 'fallback';
     
     try {
-      console.log(`🤖 Attempting story generation for job ${jobId}...`);
-      // Check Gemini availability first
-      console.log(`🔍 Checking Gemini AI availability for job ${jobId}...`);
-      const geminiStatus = await geminiGenerator.checkAvailability();
-      console.log(`📊 Gemini status for job ${jobId}:`, geminiStatus);
+      console.log(`🤖 Attempting Gemini story generation for job ${jobId}...`);
       
-      if (geminiStatus.available) {
-        console.log(`🚀 Starting Gemini API call (attempt ${attempt})...`);
-        story = await geminiGenerator.generateStory(job.prompt, job.genre, characterDNA, job.options);
-        console.log(`✅ Gemini generated story for job ${jobId} - processing response...`);
-        console.log(`📊 Story response structure:`, {
-          hasStory: !!story,
-          hasStoryProperty: !!(story?.story),
-          scenes: story?.story?.scenes?.length || story?.scenes?.length || 0,
-          success: story?.success
-        });
-        generationMethod = 'gemini-ai';
-        console.log(`✅ Gemini story processing completed for job ${jobId}`);
-      } else {
-        console.warn(`⚠️ Gemini AI unavailable for job ${jobId}: ${geminiStatus.error}`);
-        if (geminiStatus.retryable) {
-          console.log(`🔄 Retryable error detected for job ${jobId}, attempting anyway...`);
-          story = await geminiGenerator.generateStory(job.prompt, job.genre, characterDNA, job.options);
-          generationMethod = 'gemini-ai-retry';
-        } else {
-          throw new Error(`Gemini unavailable: ${geminiStatus.error}`);
-        }
-      }
+      // Skip availability check and go straight to generation for better performance
+      console.log(`🚀 Starting Gemini story generation directly for job ${jobId}...`);
+      story = await geminiGenerator.generateStory(job.prompt, job.genre, characterDNA, job.options);
+      console.log(`✅ Gemini generated story for job ${jobId} - processing response...`);
+      console.log(`📊 Story response structure:`, {
+        hasStory: !!story,
+        hasStoryProperty: !!(story?.story),
+        scenes: story?.story?.scenes?.length || story?.scenes?.length || 0,
+        success: story?.success
+      });
+      generationMethod = 'gemini-ai';
+      console.log(`✅ Gemini story processing completed for job ${jobId}`);
+
     } catch (geminiError) {
       console.warn(`❌ Gemini generation failed for job ${jobId}: ${geminiError.message}`);
       console.log(`🔄 Falling back to default story engine for job ${jobId}...`);
@@ -538,8 +525,8 @@ async function generateStoryAsync(jobId) {
       await updateJobProgress(jobId, 'voice_generation', 'processing', 75);
       
       try {
-        // Use default voice if not specified
-        const voiceId = job.options?.voiceId || 'demo_voice_1';
+        // Use default voice if not specified - use first available real voice
+        const voiceId = job.options?.voiceId || '9BWtsMINqrJLrRacOk9x'; // Aria voice
         const voiceEmotion = job.options?.voiceEmotion || 'neutral';
         
         console.log(`🎙️ Generating voice narration with voice: ${voiceId}, emotion: ${voiceEmotion}`);

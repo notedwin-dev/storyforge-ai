@@ -44,8 +44,12 @@ const DEMO_VOICES = [
 async function getAvailableVoices() {
   try {
     if (process.env.DEMO_MODE === 'true') {
+      console.log('Using demo voices (DEMO_MODE=true)');
       return DEMO_VOICES;
     }
+
+    console.log('Fetching ElevenLabs voices from:', process.env.ELEVENLABS_BASE_URL);
+    console.log('API Key available:', process.env.ELEVENLABS_API_KEY ? 'Yes' : 'No');
 
     const response = await axios.get(
       `${process.env.ELEVENLABS_BASE_URL}/voices`,
@@ -57,7 +61,14 @@ async function getAvailableVoices() {
       }
     );
 
-    return response.data.voices.map(voice => ({
+    console.log('ElevenLabs API response status:', response.status);
+    console.log('Number of voices received:', response.data.voices?.length || 0);
+
+    if (!response.data.voices || !Array.isArray(response.data.voices)) {
+      throw new Error('Invalid response format from ElevenLabs API');
+    }
+
+    const mappedVoices = response.data.voices.map(voice => ({
       voice_id: voice.voice_id,
       name: voice.name,
       description: voice.description || '',
@@ -67,8 +78,23 @@ async function getAvailableVoices() {
       emotion_range: ['neutral', 'happy', 'sad'] // Default range
     }));
 
+    console.log('Successfully mapped ElevenLabs voices:', mappedVoices.map(v => v.name));
+    return mappedVoices;
+
   } catch (error) {
-    console.warn('Failed to get ElevenLabs voices, using demo voices:', error.message);
+    console.error('Failed to get ElevenLabs voices:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
+
+    // Check if it's an ElevenLabs API restriction
+    if (error.response?.status === 401 && error.response?.data?.detail?.status === 'detected_unusual_activity') {
+      console.warn('ElevenLabs API restricted due to unusual activity. Using demo voices.');
+    }
+
+    console.warn('Falling back to demo voices');
     return DEMO_VOICES;
   }
 }
@@ -77,7 +103,8 @@ async function generateVoiceNarration(text, voiceId, emotion = 'neutral', option
   try {
     console.log(`Generating voice narration with voice: ${voiceId}, emotion: ${emotion}`);
     
-    if (process.env.DEMO_MODE === 'true') {
+    // Check if it's a demo voice ID or demo mode is enabled
+    if (process.env.DEMO_MODE === 'true' || voiceId.startsWith('demo_voice_')) {
       return generateDemoVoice(text, voiceId, emotion);
     }
 
@@ -86,19 +113,25 @@ async function generateVoiceNarration(text, voiceId, emotion = 'neutral', option
       ...options.voice_settings
     };
 
+    const requestUrl = `${process.env.ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`;
+    const requestHeaders = {
+      'xi-api-key': process.env.ELEVENLABS_API_KEY,
+      'Content-Type': 'application/json',
+      'Accept': 'audio/mpeg'
+    };
+
+    console.log('Making ElevenLabs request to:', requestUrl);
+    console.log('Headers:', { ...requestHeaders, 'xi-api-key': requestHeaders['xi-api-key']?.substring(0, 10) + '...' });
+
     const response = await axios.post(
-      `${process.env.ELEVENLABS_BASE_URL}/text-to-speech/${voiceId}`,
+      requestUrl,
       {
         text: text,
         model_id: options.model_id || 'eleven_monolingual_v1',
         voice_settings: voiceSettings
       },
       {
-        headers: {
-          'xi-api-key': process.env.ELEVENLABS_API_KEY,
-          'Content-Type': 'application/json',
-          'Accept': 'audio/mpeg'
-        },
+        headers: requestHeaders,
         responseType: 'arraybuffer',
         timeout: 30000
       }
@@ -125,7 +158,18 @@ async function generateVoiceNarration(text, voiceId, emotion = 'neutral', option
     };
 
   } catch (error) {
-    console.warn('Voice generation failed, using demo audio:', error.message);
+    console.warn('Voice generation failed:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+
+    // Check if it's an ElevenLabs API restriction
+    if (error.response?.status === 401 && error.response?.data?.detail?.status === 'detected_unusual_activity') {
+      console.warn('ElevenLabs API restricted due to unusual activity. Using demo voice.');
+    }
+
+    console.log('Falling back to demo voice generation');
     return generateDemoVoice(text, voiceId, emotion);
   }
 }
