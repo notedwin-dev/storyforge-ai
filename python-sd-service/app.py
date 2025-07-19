@@ -61,7 +61,7 @@ class LocalSDService:
         # Style configurations optimized for various GPUs
         self.style_configs = {
             "cartoon": {
-                "model_id": "runwayml/stable-diffusion-v1-5",
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
                 "positive_prompt": "cartoon style, clean lines, bright colors, comic book art, illustration, animated style",
                 "negative_prompt": "realistic, photograph, photorealistic, blurry, low quality, distorted, nsfw, dark, scary",
                 "steps": 20,
@@ -70,7 +70,7 @@ class LocalSDService:
                 "height": 512
             },
             "anime": {
-                "model_id": "runwayml/stable-diffusion-v1-5",
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
                 "positive_prompt": "anime style, cel shaded, detailed character design, manga art, japanese animation",
                 "negative_prompt": "realistic, photograph, 3d render, blurry, low quality, distorted, nsfw, western style",
                 "steps": 25,
@@ -79,7 +79,7 @@ class LocalSDService:
                 "height": 512
             },
             "storybook": {
-                "model_id": "runwayml/stable-diffusion-v1-5",
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
                 "positive_prompt": "children's book illustration, watercolor style, soft colors, storybook art, whimsical, friendly",
                 "negative_prompt": "dark, scary, realistic, photograph, blurry, low quality, nsfw, violent",
                 "steps": 30,
@@ -88,7 +88,7 @@ class LocalSDService:
                 "height": 512
             },
             "realistic": {
-                "model_id": "runwayml/stable-diffusion-v1-5",
+                "model_id": "stabilityai/stable-diffusion-xl-base-1.0",
                 "positive_prompt": "photorealistic, cinematic lighting, professional photography, detailed, high quality",
                 "negative_prompt": "cartoon, anime, artistic, painting, blurry, low quality, distorted, nsfw",
                 "steps": 35,
@@ -99,7 +99,7 @@ class LocalSDService:
         }
         
         # Initialize with optimized model
-        self.load_model("runwayml/stable-diffusion-v1-5")
+        self.load_model("stabilityai/stable-diffusion-xl-base-1.0")
     
     def optimize_prompt_for_clip(self, prompt, max_tokens=75):
         """Optimize prompt to fit within CLIP's 77 token limit (keeping 2 tokens for special tokens)"""
