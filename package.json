@@ -1,5 +1,5 @@
 {
-  "name": "storyforge-ai",
+  "name": "talecraft-ai",
   "version": "1.0.0",
   "description": "🏆 Hackathon Ready: AI-powered storytelling platform with Character DNA Technology, multi-AI orchestration, and comprehensive export capabilities",
   "main": "server/index.js",

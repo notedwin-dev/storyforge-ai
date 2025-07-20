@@ -1,5 +1,5 @@
 {
-  "name": "storyforge-ai-server",
+  "name": "talecraft-ai-server",
   "version": "1.0.0",
   "description": "Backend API for TaleCraft AI",
   "main": "index.js",

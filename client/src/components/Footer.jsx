@@ -24,7 +24,7 @@ export default function Footer() {
     {
       title: 'Community',
       items: [
-        { name: 'GitHub', href: 'https://github.com/notedwin-dev/storyforge-ai', external: true },
+        { name: 'GitHub', href: 'https://github.com/notedwin-dev/talecraft-ai', external: true },
         { name: 'Discord', href: '#discord', external: true },
         { name: 'Twitter', href: '#twitter', external: true },
         { name: 'Blog', href: '#blog' }
@@ -42,9 +42,9 @@ export default function Footer() {
   ]
 
   const socialLinks = [
-    { name: 'GitHub', icon: Github, href: 'https://github.com/notedwin-dev/storyforge-ai' },
+    { name: 'GitHub', icon: Github, href: 'https://github.com/notedwin-dev/talecraft-ai' },
     { name: 'Twitter', icon: Twitter, href: '#twitter' },
-    { name: 'Email', icon: Mail, href: 'mailto:hello@storyforge-ai.com' }
+    { name: 'Email', icon: Mail, href: 'mailto:hello@talecraft-ai.com' }
   ]
 
   return (

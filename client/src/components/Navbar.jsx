@@ -118,7 +118,7 @@ export default function Navbar() {
             </motion.button>
             
             <a
-              href="https://github.com/notedwin-dev/storyforge-ai"
+              href="https://github.com/notedwin-dev/talecraft-ai"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"
@@ -199,7 +199,7 @@ export default function Navbar() {
                 </button>
                 
                 <a
-                  href="https://github.com/notedwin-dev/storyforge-ai"
+                  href="https://github.com/notedwin-dev/talecraft-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors"

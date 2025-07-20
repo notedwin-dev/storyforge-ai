@@ -360,7 +360,7 @@ graph LR
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd storyforge-ai
+   cd talecraft-ai
    ```
 
 2. **Install dependencies**
@@ -421,7 +421,7 @@ graph LR
 ## 📁 Enhanced Project Structure
 
 ```
-storyforge-ai/
+talecraft-ai/
 ├── client/                          # React frontend application (Vite)
 │   ├── public/
 │   │   ├── index.html               # Main HTML template
@@ -1707,7 +1707,7 @@ CMD ["npm", "start"]
 # docker-compose.yml
 version: '3.8'
 services:
-  storyforge-ai:
+  talecraft-ai:
     build: .
     ports:
       - "3001:3001"
@@ -1728,7 +1728,7 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./ssl:/etc/ssl
     depends_on:
-      - storyforge-ai
+      - talecraft-ai
     restart: unless-stopped
 ```
 

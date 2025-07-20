@@ -14,8 +14,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/notedwin-dev/storyforge-ai.git
-cd storyforge-ai
+git clone https://github.com/notedwin-dev/talecraft-ai.git
+cd talecraft-ai
 
 # Install all dependencies (Node.js + Python)
 npm run install:all
@@ -119,7 +119,7 @@ HUGGING_FACE_TOKEN=your_token_here
 ## 📁 Project Structure
 
 ```
-storyforge-ai/
+talecraft-ai/
 ├── client/                 # React frontend (port 5173)
 ├── server/                 # Node.js backend (port 3001)
 ├── python-sd-service/      # Python Stable Diffusion (port 8080)

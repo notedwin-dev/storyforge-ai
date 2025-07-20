@@ -75,7 +75,7 @@
 ```bash
 # 1. Clone and install dependencies
 git clone <repository-url>
-cd storyforge-ai
+cd talecraft-ai
 npm run install:all
 
 # 2. Configure environment (copy and edit)
@@ -183,7 +183,7 @@ graph TB
 ## 📁 Project Structure
 
 ```
-storyforge-ai/
+talecraft-ai/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
@@ -339,7 +339,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🏗️ Architecture
 
 ```
-storyforge-ai/
+talecraft-ai/
 ├── client/          # React frontend (Vite)
 ├── server/          # Node.js/Express backend
 ├── shared/          # Shared types and utilities
@@ -357,7 +357,7 @@ storyforge-ai/
 1. **Clone and install dependencies:**
    ```bash
    git clone <repository-url>
-   cd storyforge-ai
+   cd talecraft-ai
    npm run install:all
    ```
 
