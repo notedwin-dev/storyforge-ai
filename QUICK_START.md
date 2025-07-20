@@ -1,6 +1,6 @@
-# 🚀 StoryForge AI - Quick Start Guide
+# 🚀 TaleCraft AI - Quick Start Guide
 
-> Get StoryForge AI running in **5 minutes** with this step-by-step guide. Perfect for hackathon demos and immediate testing!
+> Get TaleCraft AI running in **5 minutes** with this step-by-step guide. Perfect for hackathon demos and immediate testing!
 
 ## 📋 Prerequisites
 
@@ -68,7 +68,7 @@ AWS_SECRET_ACCESS_KEY=your_aws_secret_here
 AWS_S3_BUCKET=your_bucket_name
 ```
 
-### 4. Start StoryForge AI (1 minute)
+### 4. Start TaleCraft AI (1 minute)
 
 ```bash
 # Start both frontend and backend

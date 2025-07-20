@@ -171,7 +171,7 @@ cron.schedule('0 * * * *', () => {
 
 // Start server
 const server = app.listen(PORT, () => {
-  console.log(`🚀 StoryForge AI Server running on port ${PORT}`);
+  console.log(`🚀 TaleCraft AI Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
 });

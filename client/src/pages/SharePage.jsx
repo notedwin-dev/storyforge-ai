@@ -63,7 +63,7 @@ const SharePage = () => {
 
   const shareUrl = window.location.href;
   const shareTitle = story?.title || 'Amazing AI-Generated Story';
-  const shareText = story?.content?.slice(0, 200) + '...' || 'Check out this amazing story created with StoryForge AI!';
+  const shareText = story?.content?.slice(0, 200) + '...' || 'Check out this amazing story created with TaleCraft AI!';
 
   const copyToClipboard = async () => {
     try {

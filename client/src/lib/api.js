@@ -529,7 +529,7 @@ export const downloadFile = (url, filename) => {
   document.body.removeChild(link)
 }
 
-export const shareUrl = async (url, title = 'Check out my StoryForge AI story!') => {
+export const shareUrl = async (url, title = 'Check out my TaleCraft AI story!') => {
   if (navigator.share) {
     try {
       await navigator.share({

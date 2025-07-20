@@ -1,6 +1,6 @@
-# StoryForge AI
+# TaleCraft AI
 
-# 🎬 StoryForge AI
+# 🎬 TaleCraft AI
 
 > **AI-Powered Interactive Storytelling Platform** - Transform character images and story prompts into rich multimedia experiences with consistent character rendering, voice narration, and professional video generation.
 
@@ -307,7 +307,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🎯 Hackathon Submission Status: ✅ COMPLETE
 
-**Your StoryForge AI application is fully functional and ready for demonstration!**
+**Your TaleCraft AI application is fully functional and ready for demonstration!**
 
 ### **Submission Checklist:**
 - ✅ **Demo Ready**: 4-minute complete workflow demonstration

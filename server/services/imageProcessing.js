@@ -244,7 +244,7 @@ async function createCollage(imageBuffers, layout = 'grid') {
 }
 
 // Add watermark to image
-async function addWatermark(imageBuffer, watermarkText = 'StoryForge AI') {
+async function addWatermark(imageBuffer, watermarkText = 'TaleCraft AI') {
   try {
     const { width, height } = await sharp(imageBuffer).metadata();
     

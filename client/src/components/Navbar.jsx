@@ -75,7 +75,7 @@ export default function Navbar() {
               <Sparkles className="h-6 w-6 text-white" />
             </motion.div>
             <span className="text-xl font-heading font-bold gradient-text">
-              StoryForge AI
+              TaleCraft AI
             </span>
           </Link>
 

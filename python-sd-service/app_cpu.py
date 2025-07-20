@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CPU-Optimized Free Local Stable Diffusion Service for StoryForge AI
+CPU-Optimized Free Local Stable Diffusion Service for TaleCraft AI
 Provides cost-free image generation using Hugging Face Diffusers (CPU compatible)
 """
 

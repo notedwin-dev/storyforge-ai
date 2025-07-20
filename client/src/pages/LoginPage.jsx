@@ -42,7 +42,7 @@ const LoginPage = () => {
           {/* Welcome Message */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              Welcome to StoryForge AI
+              Welcome to TaleCraft AI
             </h1>
             <p className="text-gray-600 dark:text-gray-300">
               Sign in to create amazing AI-generated stories with your characters

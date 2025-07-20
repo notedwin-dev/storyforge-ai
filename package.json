@@ -29,7 +29,7 @@
     "pdf-export",
     "character-consistency"
   ],
-  "author": "StoryForge AI Team",
+  "author": "TaleCraft AI Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"

@@ -1,8 +1,8 @@
-# StoryForge AI - Comprehensive Documentation
+# TaleCraft AI - Comprehensive Documentation
 
 ## 🎬 Overview
 
-StoryForge AI is a comprehensive AI-powered storytelling platform that enables users to create immersive stories with consistent character rendering, voice narration, and video generation. The platform combines cutting-edge AI technologies to transform simple character descriptions and story prompts into rich multimedia experiences.
+TaleCraft AI is a comprehensive AI-powered storytelling platform that enables users to create immersive stories with consistent character rendering, voice narration, and video generation. The platform combines cutting-edge AI technologies to transform simple character descriptions and story prompts into rich multimedia experiences.
 
 ## 📊 Architecture Overview
 
@@ -1180,7 +1180,7 @@ The Python SD Service (`python-sd-service`) is a critical component that provide
 #### Architecture & Benefits
 ```mermaid
 graph TB
-    subgraph "StoryForge AI Backend"
+    subgraph "TaleCraft AI Backend"
         A[Image Generation Request] --> B[Service Selection Logic]
         B --> C{Python SD Available?}
         C -->|Yes| D[Python SD Service]
@@ -1868,7 +1868,7 @@ npm run type-check
 
 ## 🎯 Technical Implementation Summary
 
-Your **StoryForge AI** platform now features comprehensive documentation covering:
+Your **TaleCraft AI** platform now features comprehensive documentation covering:
 
 ### 🏗️ **Enhanced Architecture**
 - **Multi-layered System Design**: Frontend (React+Vite), Backend (Node.js+Express), AI Orchestration, Storage Infrastructure
@@ -1903,6 +1903,6 @@ Your **StoryForge AI** platform now features comprehensive documentation coverin
 - **Scalable Infrastructure**: Support for both development (local) and production (AWS) environments
 - **Professional Documentation**: Architecture diagrams, implementation details, and deployment guides
 
-Your documentation now provides complete technical depth for judges, developers, and stakeholders to understand the sophisticated engineering behind StoryForge AI's innovative storytelling platform! 🌟
+Your documentation now provides complete technical depth for judges, developers, and stakeholders to understand the sophisticated engineering behind TaleCraft AI's innovative storytelling platform! 🌟
 
 **Ready for hackathon submission and technical review!** 🏆

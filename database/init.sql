@@ -1,4 +1,4 @@
--- StoryForge AI Database Schema
+-- TaleCraft AI Database Schema
 -- Run this SQL in your Supabase SQL Editor to create the necessary tables
 
 -- Create users table (extends Supabase auth.users)
@@ -211,7 +211,7 @@ CREATE TRIGGER update_generations_updated_at BEFORE UPDATE ON public.generations
 -- Success message
 DO $$
 BEGIN
-  RAISE NOTICE 'StoryForge AI database initialization completed successfully!';
+  RAISE NOTICE 'TaleCraft AI database initialization completed successfully!';
   RAISE NOTICE 'Tables created: users, characters, generations';
   RAISE NOTICE 'RLS policies enabled and configured';
   RAISE NOTICE 'Auto user profile creation trigger installed';

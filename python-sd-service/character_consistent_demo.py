@@ -183,7 +183,7 @@ def demo_story_generation():
         print(f"  • Scene {img_info['scene_number']}: {img_info['filename']}")
     
     print("\n💡 All images saved to current directory")
-    print("💡 Use these images in your StoryForge AI application for consistent character representation")
+    print("💡 Use these images in your TaleCraft AI application for consistent character representation")
 
 if __name__ == "__main__":
     print("🚀 Character-Consistent Story Scene Generation Demo")

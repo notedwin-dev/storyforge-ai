@@ -64,7 +64,7 @@ export default function Footer() {
                   <Sparkles className="h-6 w-6 text-white" />
                 </motion.div>
                 <span className="text-xl font-heading font-bold">
-                  StoryForge AI
+                  TaleCraft AI
                 </span>
               </div>
               <p className="text-gray-400 mb-6 max-w-md">
@@ -123,7 +123,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-1 text-gray-400 mb-4 md:mb-0">
-              <span>© {currentYear} StoryForge AI. Made with</span>
+              <span>© {currentYear} TaleCraft AI. Made with</span>
               <Heart className="h-4 w-4 text-red-500" />
               <span>for storytellers everywhere.</span>
             </div>

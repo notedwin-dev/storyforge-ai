@@ -1,6 +1,6 @@
 # Character-Consistent Scene Generation
 
-This enhancement adds image-to-image functionality to StoryForge AI for maintaining character consistency across all story scenes.
+This enhancement adds image-to-image functionality to TaleCraft AI for maintaining character consistency across all story scenes.
 
 ## Features
 

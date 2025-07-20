@@ -278,7 +278,7 @@ export default function HomePage() {
               Ready to Create Your First Story?
             </h2>
             <p className="text-xl text-white/90 mb-8">
-              Join thousands of creators who are already making amazing stories with StoryForge AI.
+              Join thousands of creators who are already making amazing stories with TaleCraft AI.
             </p>
             <Link
               to="/create"
